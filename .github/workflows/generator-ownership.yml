@@ -1,0 +1,55 @@
+name: Generator Ownership
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  orchestrated-paths:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require generator reference for orchestrated files
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- \
+            README.md \
+            CONTRIBUTING.md \
+            LICENSE \
+            package.json \
+            package-lock.json \
+            tsconfig.json \
+            tsconfig.esm.json \
+            eslint.config.mjs \
+            openapi.yaml \
+            src/ \
+            test/ \
+            test-d/ \
+            scripts/ \
+            dist/ || true)"
+
+          if [ -z "$changed" ]; then
+            exit 0
+          fi
+
+          reference_text="${PR_TITLE}
+          ${PR_BODY:-}"
+          if printf '%s\n' "$reference_text" | grep -Eiq 'Bidsketch/signwell-sdk-generator|signwell-sdk-generator|generator PR|generator source|generated from'; then
+            exit 0
+          fi
+
+          echo "::error::This PR changes generator-owned SDK paths but does not reference signwell-sdk-generator in the PR title or body."
+          echo "Changed generator-owned paths:"
+          echo "$changed"
+          exit 1

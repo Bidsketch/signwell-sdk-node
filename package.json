@@ -1,0 +1,73 @@
+{
+  "name": "@signwell/node-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the SignWell API",
+  "author": "SignWell",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bidsketch/signwell-sdk-node.git"
+  },
+  "homepage": "https://github.com/Bidsketch/signwell-sdk-node#readme",
+  "bugs": {
+    "url": "https://github.com/Bidsketch/signwell-sdk-node/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "typings": "./dist/index.d.ts",
+  "module": "./dist/esm/index.js",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.esm.json && node scripts/write-esm-package-json.mjs",
+    "lint": "eslint src test test-d --max-warnings 0",
+    "test": "vitest run",
+    "tsd": "tsd",
+    "smoke:cjs": "node test/smoke/cjs.cjs",
+    "smoke:esm": "node test/smoke/esm.mjs",
+    "validate": "npm run lint && npm run build && npm test && npm run tsd && npm run smoke:cjs && npm run smoke:esm && npm pack --dry-run && npm audit --omit=dev --audit-level=low",
+    "prepack": "npm run build"
+  },
+  "tsd": {
+    "compilerOptions": {
+      "module": "Node16",
+      "target": "ES2022",
+      "lib": [
+        "ES2022",
+        "DOM",
+        "DOM.Iterable"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@tsd/typescript": "5.9.3",
+    "@types/node": "22.19.19",
+    "@typescript-eslint/eslint-plugin": "8.60.0",
+    "@typescript-eslint/parser": "8.60.0",
+    "eslint": "9.39.4",
+    "tsd": "0.33.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.60.0",
+    "vitest": "3.2.4"
+  }
+}
