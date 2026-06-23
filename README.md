@@ -42,7 +42,7 @@ const fieldType: Models.FieldType = Models.FieldType.Signature;
 ## Errors
 
 ```ts
-import { DocumentApi, NotFoundError, RateLimitError } from '@signwell/node-sdk';
+import { DocumentApi, NotFoundError, RateLimitError, extractRateLimitInfo } from '@signwell/node-sdk';
 
 try {
   await new DocumentApi().getDocument({ id: 'missing' });
@@ -50,8 +50,46 @@ try {
   if (error instanceof NotFoundError) {
     console.log(error.body);
   } else if (error instanceof RateLimitError) {
-    console.log('Try again later');
+    console.log('Try again later', extractRateLimitInfo(error));
   }
+}
+```
+
+Use raw methods or response middleware when you need headers from successful responses:
+
+```ts
+const raw = await new DocumentApi().getDocumentRaw({ id: 'doc_123' });
+console.log(extractRateLimitInfo(raw.raw));
+```
+
+## Documents and Templates
+
+```ts
+import { DocumentApi, TemplateApi } from '@signwell/node-sdk';
+
+const documents = new DocumentApi();
+
+const page = await documents.listDocuments({
+  query: 'status:Completed AND name:NDA',
+  limit: 100 // clamped to the API maximum of 50
+});
+
+for await (const document of documents.iterateDocuments({ query: 'status:Completed' })) {
+  console.log(document.id);
+}
+
+await documents.updateDocument({
+  id: 'doc_123',
+  updateDocumentAndSendRequest: {
+    subject: 'Updated subject'
+  }
+}); // Alias for sendDocument / the Update and Send endpoint.
+
+const templates = new TemplateApi();
+await templates.listTemplates({ query: 'name:NDA AND archived:false' });
+
+for await (const template of templates.iterateTemplates({ query: 'name:NDA' })) {
+  console.log(template.id);
 }
 ```
 
@@ -71,6 +109,7 @@ const csvJson = await new BulkSendApi().getBulkSendCsvTemplate({
 
 const pdf = await new DocumentApi().getCompletedPdf({ id: 'doc_123' }); // Blob
 const pdfUrl = await new DocumentApi().getCompletedPdf({ id: 'doc_123', urlOnly: true }); // CompletedPdfUrlResponse
+const pdfStream = (await new DocumentApi().getCompletedPdfRaw({ id: 'doc_123' })).stream();
 
 const certificate = await new RegionalApi().getNom151Certificate({ id: 'doc_123' }); // Blob
 const certificateUrl = await new RegionalApi().getNom151Certificate({ id: 'doc_123', urlOnly: true }); // Nom151UrlResponse

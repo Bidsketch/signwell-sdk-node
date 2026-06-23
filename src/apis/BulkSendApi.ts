@@ -116,6 +116,12 @@ export class BulkSendApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling getBulkSend().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getBulkSend().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
@@ -216,11 +222,17 @@ export class BulkSendApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling getBulkSendDocuments().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getBulkSendDocuments().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
         if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
+            queryParameters['limit'] = Math.min(requestParameters['limit'], 50);
         }
 
         if (requestParameters['page'] != null) {
@@ -265,7 +277,7 @@ export class BulkSendApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
+            queryParameters['limit'] = Math.min(requestParameters['limit'], 50);
         }
 
         if (requestParameters['page'] != null) {

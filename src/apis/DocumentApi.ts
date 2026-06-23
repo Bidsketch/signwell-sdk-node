@@ -55,6 +55,7 @@ export interface GetDocumentRequest {
 export interface ListDocumentsRequest {
     page?: number;
     limit?: number;
+    query?: string;
 }
 
 export interface SendDocumentRequest {
@@ -174,6 +175,12 @@ export class DocumentApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling deleteDocument().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling deleteDocument().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
@@ -211,6 +218,12 @@ export class DocumentApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling getCompletedPdf().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getCompletedPdf().'
             );
         }
 
@@ -277,6 +290,12 @@ export class DocumentApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling getDocument().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getDocument().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
@@ -318,7 +337,11 @@ export class DocumentApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
+            queryParameters['limit'] = Math.min(requestParameters['limit'], 50);
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -356,6 +379,12 @@ export class DocumentApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling sendDocument().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling sendDocument().'
             );
         }
 
@@ -398,6 +427,20 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
+     * Alias for sendDocument.
+     */
+    async updateDocumentRaw(requestParameters: SendDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
+        return this.sendDocumentRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Alias for sendDocument.
+     */
+    async updateDocument(requestParameters: SendDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
+        return this.sendDocument(requestParameters, initOverrides);
+    }
+
+    /**
      * Sends a reminder email to recipients that have not signed yet.
      * Send Reminder
      */
@@ -406,6 +449,12 @@ export class DocumentApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling sendReminder().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling sendReminder().'
             );
         }
 
@@ -457,6 +506,12 @@ export class DocumentApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling updateRecipients().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling updateRecipients().'
+            );
+        }
 
         if (requestParameters['updateRecipientsRequest'] == null) {
             throw new runtime.RequiredError(
@@ -494,6 +549,32 @@ export class DocumentApi extends runtime.BaseAPI {
     async updateRecipients(requestParameters: UpdateRecipientsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
         const response = await this.updateRecipientsRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Iterate over paginated listDocuments responses.
+     */
+    async *iterateDocumentPages(requestParameters: ListDocumentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): AsyncGenerator<DocumentListResponse, void, unknown> {
+        let page = requestParameters.page ?? 1;
+        while (true) {
+            const response = await this.listDocuments({ ...requestParameters, page }, initOverrides);
+            yield response;
+            if (response.next_page == null) {
+                break;
+            }
+            page = response.next_page;
+        }
+    }
+
+    /**
+     * Iterate over all listDocuments items.
+     */
+    async *iterateDocuments(requestParameters: ListDocumentsRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): AsyncGenerator<DocumentResponse, void, unknown> {
+        for await (const page of this.iterateDocumentPages(requestParameters, initOverrides)) {
+            for (const item of page.documents) {
+                yield item;
+            }
+        }
     }
 
 }

@@ -5,8 +5,12 @@ import {
   BulkSendApi,
   Configuration,
   DocumentApi,
+  extractRateLimitInfo,
   NotFoundError,
+  RateLimitError,
   RegionalApi,
+  RequiredError,
+  TemplateApi,
   UnsupportedContentTypeError
 } from '../src/index.js';
 
@@ -41,7 +45,40 @@ async function readStreamText(stream: ReadableStream<Uint8Array>): Promise<strin
   return text + decoder.decode();
 }
 
+function urlFromInput(input: string | URL | Request): string {
+  return input instanceof Request ? input.url : String(input);
+}
+
+async function collectAsync<T>(iterable: AsyncIterable<T>): Promise<T[]> {
+  const collected: T[] = [];
+  for await (const item of iterable) {
+    collected.push(item);
+  }
+  return collected;
+}
+
 describe('runtime', () => {
+  it('rejects empty and blank document IDs before making a request', async () => {
+    let calls = 0;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async () => {
+        calls += 1;
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await expect(api.getDocument({ id: '' })).rejects.toMatchObject({
+      name: 'RequiredError',
+      field: 'id'
+    });
+    await expect(api.getDocument({ id: '   ' })).rejects.toBeInstanceOf(RequiredError);
+    expect(calls).toBe(0);
+  });
+
   it('throws status-specific errors with parsed bodies', async () => {
     const api = new DocumentApi(new Configuration({
       apiKey: 'test_key',
@@ -58,6 +95,61 @@ describe('runtime', () => {
       body: { message: 'Not found' }
     });
     await expect(api.getDocument({ id: 'missing' })).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('exposes rate limit headers on status errors', async () => {
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async () => new Response(JSON.stringify({ message: 'Too many requests' }), {
+        status: 429,
+        statusText: 'Too Many Requests',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': '1710000000',
+          'Retry-After': '30'
+        }
+      })
+    }));
+
+    try {
+      await api.getDocument({ id: 'doc_123' });
+      throw new Error('Expected getDocument to throw');
+    } catch (error) {
+      expect(error).toBeInstanceOf(RateLimitError);
+      if (!(error instanceof RateLimitError)) {
+        throw error;
+      }
+      expect(error.rateLimit).toMatchObject({
+        limit: 100,
+        remaining: 0,
+        reset: 1710000000,
+        retryAfter: 30
+      });
+      expect(extractRateLimitInfo(error)).toBe(error.rateLimit);
+    }
+  });
+
+  it('allows rate limit header extraction from successful raw responses', async () => {
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async () => new Response(JSON.stringify({ id: 'doc_123' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-RateLimit-Limit': '100',
+          'X-RateLimit-Remaining': '99'
+        }
+      })
+    }));
+
+    const response = await api.getDocumentRaw({ id: 'doc_123' });
+
+    expect(extractRateLimitInfo(response.raw)).toMatchObject({
+      limit: 100,
+      remaining: 99
+    });
   });
 
   it('raises typed unsupported content-type errors for JSON responses', async () => {
@@ -146,6 +238,111 @@ describe('runtime', () => {
     await expect(readStreamText(stream)).resolves.toBe(payloadChunks.join(''));
     expect(blobCalled).toBe(false);
     expect(acceptHeader).toBe('application/octet-stream');
+  });
+
+  it('serializes list document and template query filters and clamps limits', async () => {
+    const urls: string[] = [];
+    const documentApi = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (input) => {
+        urls.push(urlFromInput(input));
+        return new Response(JSON.stringify({
+          documents: [],
+          current_page: 1,
+          next_page: null,
+          total_count: 0,
+          total_pages: 1
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+    const templateApi = new TemplateApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (input) => {
+        urls.push(urlFromInput(input));
+        return new Response(JSON.stringify({
+          templates: [],
+          current_page: 1,
+          next_page: null,
+          total_count: 0,
+          total_pages: 1
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await documentApi.listDocuments({ query: 'status:Completed AND name:NDA', limit: 100 });
+    await templateApi.listTemplates({ query: 'name:NDA AND archived:false', limit: 100 });
+
+    const documentUrl = new URL(urls[0]!);
+    expect(documentUrl.pathname).toBe('/api/v1/documents');
+    expect(documentUrl.searchParams.get('query')).toBe('status:Completed AND name:NDA');
+    expect(documentUrl.searchParams.get('limit')).toBe('50');
+
+    const templateUrl = new URL(urls[1]!);
+    expect(templateUrl.pathname).toBe('/api/v1/document_templates');
+    expect(templateUrl.searchParams.get('query')).toBe('name:NDA AND archived:false');
+    expect(templateUrl.searchParams.get('limit')).toBe('50');
+  });
+
+  it('iterates document pages and document items until next_page is null', async () => {
+    const urls: string[] = [];
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (input) => {
+        const url = new URL(urlFromInput(input));
+        urls.push(url.toString());
+        const page = url.searchParams.get('page') ?? '1';
+        return new Response(JSON.stringify({
+          documents: [{ id: `doc_${page}` }],
+          current_page: Number(page),
+          next_page: page === '1' ? 2 : null,
+          total_count: 2,
+          total_pages: 2
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    const pages = await collectAsync(api.iterateDocumentPages({ query: 'status:Completed', limit: 100 }));
+    const documents = await collectAsync(api.iterateDocuments({ query: 'status:Completed', limit: 100 }));
+
+    expect(pages.map((page) => page.current_page)).toEqual([1, 2]);
+    expect(documents.map((document) => document.id)).toEqual(['doc_1', 'doc_2']);
+    expect(urls.map((url) => new URL(url).searchParams.get('page'))).toEqual(['1', '2', '1', '2']);
+    expect(new URL(urls[0]!).searchParams.get('limit')).toBe('50');
+  });
+
+  it('iterates template pages and template items until next_page is null', async () => {
+    const api = new TemplateApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (input) => {
+        const url = new URL(urlFromInput(input));
+        const page = url.searchParams.get('page') ?? '1';
+        return new Response(JSON.stringify({
+          templates: [{ id: `tmpl_${page}` }],
+          current_page: Number(page),
+          next_page: page === '1' ? 2 : null,
+          total_count: 2,
+          total_pages: 2
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    const pages = await collectAsync(api.iterateTemplatePages({ query: 'name:NDA' }));
+    const templates = await collectAsync(api.iterateTemplates({ query: 'name:NDA' }));
+
+    expect(pages.map((page) => page.current_page)).toEqual([1, 2]);
+    expect(templates.map((template) => template.id)).toEqual(['tmpl_1', 'tmpl_2']);
   });
 
   it('uses Blob mode for default NOM-151 certificate downloads', async () => {
