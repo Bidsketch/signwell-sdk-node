@@ -38,6 +38,7 @@ export interface GetTemplateRequest {
 export interface ListTemplatesRequest {
     page?: number;
     limit?: number;
+    query?: string;
 }
 
 export interface UpdateTemplateRequest {
@@ -104,6 +105,12 @@ export class TemplateApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling deleteTemplate().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling deleteTemplate().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
@@ -141,6 +148,12 @@ export class TemplateApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling getTemplate().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getTemplate().'
             );
         }
 
@@ -184,7 +197,11 @@ export class TemplateApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['limit'] != null) {
-            queryParameters['limit'] = requestParameters['limit'];
+            queryParameters['limit'] = Math.min(requestParameters['limit'], 50);
+        }
+
+        if (requestParameters['query'] != null) {
+            queryParameters['query'] = requestParameters['query'];
         }
 
         const headerParameters: runtime.HTTPHeaders = {};
@@ -224,6 +241,12 @@ export class TemplateApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling updateTemplate().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling updateTemplate().'
+            );
+        }
 
         if (requestParameters['documentTemplateUpdateRequest'] == null) {
             throw new runtime.RequiredError(
@@ -261,6 +284,32 @@ export class TemplateApi extends runtime.BaseAPI {
     async updateTemplate(requestParameters: UpdateTemplateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentTemplateResponse> {
         const response = await this.updateTemplateRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Iterate over paginated listTemplates responses.
+     */
+    async *iterateTemplatePages(requestParameters: ListTemplatesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): AsyncGenerator<DocumentTemplateListResponse, void, unknown> {
+        let page = requestParameters.page ?? 1;
+        while (true) {
+            const response = await this.listTemplates({ ...requestParameters, page }, initOverrides);
+            yield response;
+            if (response.next_page == null) {
+                break;
+            }
+            page = response.next_page;
+        }
+    }
+
+    /**
+     * Iterate over all listTemplates items.
+     */
+    async *iterateTemplates(requestParameters: ListTemplatesRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): AsyncGenerator<DocumentTemplateResponse, void, unknown> {
+        for await (const page of this.iterateTemplatePages(requestParameters, initOverrides)) {
+            for (const item of page.templates) {
+                yield item;
+            }
+        }
     }
 
 }

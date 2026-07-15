@@ -42,6 +42,12 @@ export class RegionalApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling getNom151Certificate().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getNom151Certificate().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 

@@ -1,6 +1,7 @@
 import { expectAssignable, expectError, expectType } from 'tsd';
 import {
   APIApplicationApi,
+  ApiConnectionError,
   ApiApplicationApi,
   BadRequestError,
   BulkSendApi,
@@ -8,13 +9,20 @@ import {
   DocumentApi,
   Embedded,
   Errors,
+  ForbiddenError,
   Models,
   NotFoundError,
+  PermissionDeniedError,
+  RateLimitInfo,
   RegionalApi,
   Resources,
+  TemplateApi,
+  TransportError,
   Webhook,
   createSigningDocument,
   createMemoryReplayStore,
+  extractRateLimitInfo,
+  normalizeSignWellRequestBody,
   verifyEvent,
   verifyEventOnce
 } from '@signwell/node-sdk';
@@ -34,6 +42,41 @@ expectType<Promise<Models.CompletedPdfUrlResponse>>(documentApi.getCompletedPdf(
   id: 'doc_123',
   urlOnly: true
 }));
+expectType<Promise<Models.DocumentListResponse>>(documentApi.listDocuments({
+  query: 'status:Completed AND name:NDA',
+  limit: 100
+}));
+expectType<AsyncGenerator<Models.DocumentListResponse, void, unknown>>(documentApi.iterateDocumentPages({
+  query: 'status:Completed'
+}));
+expectType<AsyncGenerator<Models.DocumentResponse, void, unknown>>(documentApi.iterateDocuments({
+  limit: 50
+}));
+expectType<Promise<Models.DocumentResponse>>(documentApi.updateDocument({
+  id: 'doc_123',
+  updateDocumentAndSendRequest: {}
+}));
+expectType<Promise<Models.DocumentResponse>>(documentApi.waitForCompletion('doc_123', {
+  intervalMs: 0,
+  maxAttempts: 2
+}));
+
+const templateApi = new TemplateApi();
+expectType<Promise<Models.DocumentTemplateListResponse>>(templateApi.listTemplates({
+  query: 'name:NDA AND archived:false',
+  limit: 100
+}));
+expectType<AsyncGenerator<Models.DocumentTemplateListResponse, void, unknown>>(templateApi.iterateTemplatePages({
+  query: 'name:NDA'
+}));
+expectType<AsyncGenerator<Models.DocumentTemplateResponse, void, unknown>>(templateApi.iterateTemplates({
+  limit: 50
+}));
+
+expectType<RateLimitInfo | undefined>(extractRateLimitInfo(new Headers()));
+expectType<typeof PermissionDeniedError>(ForbiddenError);
+expectType<typeof ApiConnectionError>(TransportError);
+expectType<unknown>(normalizeSignWellRequestBody({ type: 'checkbox', value: true }));
 
 const regionalApi = new RegionalApi(new Configuration({ apiKey: 'test_key' }));
 expectType<Promise<Blob>>(regionalApi.getNom151Certificate({ id: 'doc_123' }));

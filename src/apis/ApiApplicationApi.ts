@@ -43,6 +43,12 @@ export class ApiApplicationApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling deleteApiApplication().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling deleteApiApplication().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
@@ -80,6 +86,12 @@ export class ApiApplicationApi extends runtime.BaseAPI {
             throw new runtime.RequiredError(
                 'id',
                 'Required parameter "id" was null or undefined when calling getApiApplication().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling getApiApplication().'
             );
         }
 

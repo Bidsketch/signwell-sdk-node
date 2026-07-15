@@ -11,6 +11,20 @@ export interface ApiErrorOptions {
   cause?: unknown;
 }
 
+export interface RateLimitInfo {
+  limit?: number | undefined;
+  remaining?: number | undefined;
+  reset?: number | undefined;
+  resetAt?: Date | undefined;
+  retryAfter?: number | undefined;
+  retryAfterAt?: Date | undefined;
+}
+
+export interface ApiStatusErrorOptions extends ApiErrorOptions {
+  code: number;
+  rateLimit?: RateLimitInfo | undefined;
+}
+
 export class ApiError extends Error {
   readonly code: number | undefined;
   readonly response: Response | undefined;
@@ -34,13 +48,21 @@ export class ApiError extends Error {
 }
 
 export class ApiStatusError extends ApiError {
+  readonly rateLimit: RateLimitInfo | undefined;
+
+  constructor(options: ApiStatusErrorOptions) {
+    super(options);
+    this.rateLimit = options.rateLimit ?? extractRateLimitInfo(options.responseHeaders ?? options.response);
+  }
+
   static async fromResponse(response: Response): Promise<ApiStatusError> {
     const responseBody = await safeResponseText(response);
-    const options: ApiErrorOptions & { code: number } = {
+    const options: ApiStatusErrorOptions = {
       code: response.status,
       response,
       responseHeaders: response.headers,
-      message: response.statusText || 'Response returned an error code'
+      message: response.statusText || 'Response returned an error code',
+      rateLimit: extractRateLimitInfo(response.headers)
     };
     if (responseBody !== undefined) {
       options.responseBody = responseBody;
@@ -48,7 +70,7 @@ export class ApiStatusError extends ApiError {
     return ApiStatusError.for(options);
   }
 
-  static for(options: ApiErrorOptions & { code: number }): ApiStatusError {
+  static for(options: ApiStatusErrorOptions): ApiStatusError {
     const ErrorClass = statusErrorClass(options.code);
     return new ErrorClass(options);
   }
@@ -66,6 +88,9 @@ export class ApiConnectionError extends ApiError {}
 export class ApiTimeoutError extends ApiConnectionError {}
 export class UnsupportedContentTypeError extends ApiError {}
 export class FetchError extends ApiConnectionError {}
+
+export const ForbiddenError = PermissionDeniedError;
+export const TransportError = ApiConnectionError;
 
 export class RequiredError extends ApiError {
   readonly field: string;
@@ -86,6 +111,108 @@ function statusErrorClass(code: number): typeof ApiStatusError {
   if (code === 429) return RateLimitError;
   if (code >= 500) return InternalServerError;
   return ApiStatusError;
+}
+
+export function extractRateLimitInfo(source: Headers | Response | ApiError | undefined): RateLimitInfo | undefined {
+  if (source === undefined) {
+    return undefined;
+  }
+
+  if (source instanceof ApiError) {
+    if (source instanceof ApiStatusError && source.rateLimit !== undefined) {
+      return source.rateLimit;
+    }
+    return extractRateLimitInfo(source.responseHeaders ?? source.response);
+  }
+
+  const headers = headersFromSource(source);
+  if (headers === undefined) {
+    return undefined;
+  }
+
+  const limit = parseHeaderNumber(firstHeader(headers, ['x-ratelimit-limit', 'ratelimit-limit']));
+  const remaining = parseHeaderNumber(firstHeader(headers, ['x-ratelimit-remaining', 'ratelimit-remaining']));
+  const reset = parseHeaderNumber(firstHeader(headers, ['x-ratelimit-reset', 'ratelimit-reset']));
+  const retryAfter = parseRetryAfter(firstHeader(headers, ['retry-after']));
+  const rateLimit: RateLimitInfo = {};
+
+  if (limit !== undefined) {
+    rateLimit.limit = limit;
+  }
+  if (remaining !== undefined) {
+    rateLimit.remaining = remaining;
+  }
+  if (reset !== undefined) {
+    rateLimit.reset = reset;
+    if (reset > 1_000_000_000) {
+      rateLimit.resetAt = new Date(reset * 1000);
+    }
+  }
+  if (retryAfter !== undefined) {
+    if (retryAfter.seconds !== undefined) {
+      rateLimit.retryAfter = retryAfter.seconds;
+    }
+    if (retryAfter.at !== undefined) {
+      rateLimit.retryAfterAt = retryAfter.at;
+    }
+  }
+
+  return Object.keys(rateLimit).length > 0 ? rateLimit : undefined;
+}
+
+function headersFromSource(source: Headers | Response): Headers | undefined {
+  if (typeof Headers !== 'undefined' && source instanceof Headers) {
+    return source;
+  }
+  if (typeof Response !== 'undefined' && source instanceof Response) {
+    return source.headers;
+  }
+  return undefined;
+}
+
+function firstHeader(headers: Headers, names: string[]): string | undefined {
+  for (const name of names) {
+    const value = headers.get(name);
+    if (value !== null && value.trim() !== '') {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function parseHeaderNumber(value: string | undefined): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const match = value.trim().match(/^-?\d+(?:\.\d+)?/);
+  if (!match) {
+    return undefined;
+  }
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseRetryAfter(value: string | undefined): { seconds?: number; at?: Date } | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const seconds = parseHeaderNumber(value);
+  if (seconds !== undefined) {
+    return { seconds };
+  }
+
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) {
+    return undefined;
+  }
+
+  return {
+    seconds: Math.max(0, Math.ceil((timestamp - Date.now()) / 1000)),
+    at: new Date(timestamp)
+  };
 }
 
 async function safeResponseText(response: Response): Promise<string | undefined> {

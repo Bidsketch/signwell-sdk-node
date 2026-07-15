@@ -87,6 +87,12 @@ export class WebhooksApi extends runtime.BaseAPI {
                 'Required parameter "id" was null or undefined when calling deleteWebhook().'
             );
         }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling deleteWebhook().'
+            );
+        }
 
         const queryParameters: runtime.HTTPQuery = {};
 
