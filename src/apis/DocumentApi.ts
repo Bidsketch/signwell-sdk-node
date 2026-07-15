@@ -73,6 +73,25 @@ export interface UpdateRecipientsOperationRequest {
     updateRecipientsRequest: UpdateRecipientsRequest;
 }
 
+export interface WaitForCompletionOptions {
+    intervalMs?: number | undefined;
+    timeoutMs?: number | undefined;
+    maxAttempts?: number | undefined;
+    terminalStatuses?: readonly string[] | undefined;
+    signal?: AbortSignal | undefined;
+}
+
+export class WaitForCompletionTimeoutError extends Error {
+    readonly lastDocument: DocumentResponse | undefined;
+
+    constructor(message: string, lastDocument: DocumentResponse | undefined) {
+        super(message);
+        Object.setPrototypeOf(this, new.target.prototype);
+        this.name = new.target.name;
+        this.lastDocument = lastDocument;
+    }
+}
+
 /**
  * 
  */
@@ -323,6 +342,47 @@ export class DocumentApi extends runtime.BaseAPI {
     async getDocument(requestParameters: GetDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
         const response = await this.getDocumentRaw(requestParameters, initOverrides);
         return await response.value();
+    }
+
+    /**
+     * Poll getDocument until the document reaches a terminal status.
+     */
+    async waitForCompletion(id: string, options: WaitForCompletionOptions = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
+        const terminalStatuses = options.terminalStatuses ?? [
+            'Completed',
+            'Manually completed',
+            'Declined',
+            'Canceled',
+            'Bounced',
+            'Blocked',
+            'Error',
+            'Expired'
+        ];
+        const intervalMs = options.intervalMs ?? 2000;
+        const timeoutMs = options.timeoutMs ?? 120000;
+        const maxAttempts = options.maxAttempts ?? Number.POSITIVE_INFINITY;
+        const startedAt = Date.now();
+        let attempts = 0;
+        let lastDocument: DocumentResponse | undefined;
+
+        while (true) {
+            if (options.signal?.aborted) {
+                throw new WaitForCompletionTimeoutError('waitForCompletion was aborted.', lastDocument);
+            }
+
+            lastDocument = await this.getDocument({ id }, initOverrides);
+            const status = (lastDocument as { status?: string | null }).status;
+            if (typeof status === 'string' && terminalStatuses.includes(status)) {
+                return lastDocument;
+            }
+
+            attempts += 1;
+            if (attempts >= maxAttempts || Date.now() - startedAt >= timeoutMs) {
+                throw new WaitForCompletionTimeoutError('Timed out waiting for document completion.', lastDocument);
+            }
+
+            await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
+        }
     }
 
     /**

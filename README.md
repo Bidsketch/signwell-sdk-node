@@ -62,6 +62,15 @@ const raw = await new DocumentApi().getDocumentRaw({ id: 'doc_123' });
 console.log(extractRateLimitInfo(raw.raw));
 ```
 
+Compatibility aliases are additive and should not require migration:
+
+| Alias | Canonical class | Purpose |
+|-------|-----------------|---------|
+| `ForbiddenError` | `PermissionDeniedError` | HTTP 403 responses |
+| `TransportError` | `ApiConnectionError` | Network failures before a response is available |
+
+Required argument validation raises `RequiredError`.
+
 ## Documents and Templates
 
 ```ts

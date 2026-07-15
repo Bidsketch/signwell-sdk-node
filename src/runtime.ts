@@ -29,11 +29,13 @@ export {
   BadRequestError,
   ConflictError,
   FetchError,
+  ForbiddenError,
   InternalServerError,
   NotFoundError,
   PermissionDeniedError,
   RateLimitError,
   RequiredError,
+  TransportError,
   UnprocessableEntityError,
   UnsupportedContentTypeError
 } from './extras/errors.js';
@@ -265,10 +267,61 @@ function serializeBody(body: HTTPBody | undefined, contentType: string | undefin
   }
 
   if (isJsonMime(contentType)) {
-    return JSON.stringify(body);
+    return JSON.stringify(normalizeSignWellRequestBody(body));
   }
 
   return String(body);
+}
+
+export function normalizeSignWellRequestBody(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeSignWellRequestBody(item));
+  }
+
+  if (!isPlainObject(value)) {
+    return value;
+  }
+
+  const normalized: Record<string, unknown> = {};
+  for (const [key, item] of Object.entries(value)) {
+    normalized[key] = normalizeSignWellRequestBody(item);
+  }
+
+  if (fieldTypeValue(normalized.type) === 'checkbox' && normalized.value !== null && normalized.value !== undefined) {
+    normalized.value = normalizeCheckboxValue(normalized.value);
+  }
+
+  return normalized;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object'
+    && value !== null
+    && Object.getPrototypeOf(value) === Object.prototype;
+}
+
+function fieldTypeValue(value: unknown): unknown {
+  if (isPlainObject(value) && typeof value.value === 'string') {
+    return value.value;
+  }
+  return value;
+}
+
+function normalizeCheckboxValue(value: unknown): string {
+  const actualValue = isPlainObject(value) && 'actual_instance' in value ? value.actual_instance : value;
+  if (typeof actualValue === 'boolean') {
+    return actualValue ? 't' : 'f';
+  }
+  if (typeof actualValue === 'string') {
+    const normalized = actualValue.trim().toLowerCase();
+    if (normalized === 'true' || normalized === 't') {
+      return 't';
+    }
+    if (normalized === 'false' || normalized === 'f') {
+      return 'f';
+    }
+  }
+  throw new TypeError('Checkbox field values must be boolean or one of "true", "false", "t", or "f".');
 }
 
 function cleanHeaders(headers: HTTPHeaders): HTTPHeaders {

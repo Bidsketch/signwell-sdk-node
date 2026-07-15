@@ -89,6 +89,9 @@ export class ApiTimeoutError extends ApiConnectionError {}
 export class UnsupportedContentTypeError extends ApiError {}
 export class FetchError extends ApiConnectionError {}
 
+export const ForbiddenError = PermissionDeniedError;
+export const TransportError = ApiConnectionError;
+
 export class RequiredError extends ApiError {
   readonly field: string;
 

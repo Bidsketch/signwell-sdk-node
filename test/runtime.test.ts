@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ApiConnectionError,
   ApiTimeoutError,
   BlobApiResponse,
   BulkSendApi,
   Configuration,
   DocumentApi,
   extractRateLimitInfo,
+  ForbiddenError,
   NotFoundError,
+  normalizeSignWellRequestBody,
+  PermissionDeniedError,
   RateLimitError,
   RegionalApi,
   RequiredError,
   TemplateApi,
+  TransportError,
   UnsupportedContentTypeError
 } from '../src/index.js';
 
@@ -95,6 +100,11 @@ describe('runtime', () => {
       body: { message: 'Not found' }
     });
     await expect(api.getDocument({ id: 'missing' })).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it('exports additive error aliases without changing existing classes', () => {
+    expect(ForbiddenError).toBe(PermissionDeniedError);
+    expect(TransportError).toBe(ApiConnectionError);
   });
 
   it('exposes rate limit headers on status errors', async () => {
@@ -343,6 +353,43 @@ describe('runtime', () => {
 
     expect(pages.map((page) => page.current_page)).toEqual([1, 2]);
     expect(templates.map((template) => template.id)).toEqual(['tmpl_1', 'tmpl_2']);
+  });
+
+  it('waits for document completion with bounded polling', async () => {
+    const statuses = ['In Progress', 'Completed'];
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async () => new Response(JSON.stringify({ id: 'doc_123', status: statuses.shift() }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    }));
+
+    const result = await api.waitForCompletion('doc_123', { intervalMs: 0, maxAttempts: 3 });
+
+    expect(result.status).toBe('Completed');
+  });
+
+  it('normalizes checkbox request values to API wire values', () => {
+    expect(normalizeSignWellRequestBody({
+      fields: [
+        [
+          { type: 'checkbox', value: true },
+          { type: 'checkbox', value: 'false' },
+          { type: 'text', value: 'true' }
+        ]
+      ]
+    })).toEqual({
+      fields: [
+        [
+          { type: 'checkbox', value: 't' },
+          { type: 'checkbox', value: 'f' },
+          { type: 'text', value: 'true' }
+        ]
+      ]
+    });
+
+    expect(() => normalizeSignWellRequestBody({ type: 'checkbox', value: 'yes' })).toThrow(/Checkbox/);
   });
 
   it('uses Blob mode for default NOM-151 certificate downloads', async () => {
