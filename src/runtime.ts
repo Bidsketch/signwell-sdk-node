@@ -42,6 +42,12 @@ export {
 
 export const BASE_PATH = "https://www.signwell.com".replace(/\/+$/, "");
 
+// Default User-Agent so API traffic attributes to this SDK. Applied only when the
+// caller has not already set one at any casing (see createFetchParams); pass
+// 'User-Agent': undefined to send none. Browsers silently drop the header
+// (forbidden header name), which is fine — this SDK targets Node.
+const DEFAULT_USER_AGENT = 'signwell-sdk-node/0.2.0';
+
 export interface ConfigurationParameters {
   basePath?: string | undefined;
   fetchApi?: FetchAPI | undefined;
@@ -161,10 +167,16 @@ export class BaseAPI {
       }
     }
 
-    const headers = cleanHeaders({
+    const requestHeaders: HTTPHeaders = {
       ...(this.configuration.headers ?? {}),
       ...context.headers
-    });
+    };
+    // Case-insensitive so a caller's 'user-agent' replaces the default instead of
+    // adding a second key — fetch folds same-name headers into one comma-joined value.
+    if (findHeaderKey(requestHeaders, 'User-Agent') === undefined) {
+      requestHeaders['User-Agent'] = DEFAULT_USER_AGENT;
+    }
+    const headers = cleanHeaders(requestHeaders);
 
     const initOverrideFn: InitOverrideFunction =
       typeof initOverrides === 'function'

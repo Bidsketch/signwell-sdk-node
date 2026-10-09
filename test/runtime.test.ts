@@ -497,6 +497,62 @@ describe('runtime', () => {
     expect(apiKeyHeader).toBe('generated_key');
   });
 
+  it('sends the SignWell default User-Agent', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' });
+
+    expect(userAgent).toMatch(/^signwell-sdk-node\/\d+\.\d+\.\d+/);
+  });
+
+  it('lets a configured User-Agent replace the default at any casing', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      headers: { 'user-agent': 'MyApp/1.0' },
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' });
+
+    // Replaced, not comma-joined with the default.
+    expect(userAgent).toBe('MyApp/1.0');
+  });
+
+  it('lets a per-request User-Agent replace the default at any casing', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' }, { headers: { 'user-agent': 'PerRequest/2.0' } });
+
+    expect(userAgent).toBe('PerRequest/2.0');
+  });
+
   it('merges initOverrides headers and serializes body with the final content type', async () => {
     let headers: Headers | undefined;
     let body: BodyInit | null | undefined;

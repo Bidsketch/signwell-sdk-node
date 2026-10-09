@@ -1,6 +1,6 @@
 {
   "name": "@signwell/node-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "TypeScript SDK for the SignWell API",
   "author": "SignWell",
   "license": "MIT",
@@ -24,7 +24,8 @@
     "dist",
     "README.md",
     "LICENSE",
-    "CONTRIBUTING.md"
+    "CONTRIBUTING.md",
+    "CHANGELOG.md"
   ],
   "exports": {
     ".": {
@@ -60,14 +61,15 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
-    "@tsd/typescript": "5.9.3",
-    "@types/node": "22.19.19",
-    "@typescript-eslint/eslint-plugin": "8.60.0",
-    "@typescript-eslint/parser": "8.60.0",
+    "@tsd/typescript": "6.0.3",
+    "@types/node": "18.19.130",
+    "@typescript-eslint/eslint-plugin": "8.71.1",
+    "@typescript-eslint/parser": "8.71.1",
     "eslint": "9.39.4",
     "tsd": "0.33.0",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.60.0",
-    "vitest": "3.2.4"
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.1",
+    "vitest": "3.2.7",
+    "vite": "6.4.4"
   }
 }
