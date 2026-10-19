@@ -42,10 +42,17 @@ export {
 
 export const BASE_PATH = "https://www.signwell.com".replace(/\/+$/, "");
 
+// Default User-Agent so API traffic attributes to this SDK. Applied only when the
+// caller has not already set one at any casing (see createFetchParams); pass
+// 'User-Agent': undefined to send none. Browsers silently drop the header
+// (forbidden header name), which is fine — this SDK targets Node.
+const DEFAULT_USER_AGENT = 'signwell-sdk-node/0.2.0';
+
 export interface ConfigurationParameters {
   basePath?: string | undefined;
   fetchApi?: FetchAPI | undefined;
   middleware?: Middleware[] | undefined;
+  maxRateLimitRetries?: number | undefined;
   queryParamsStringify?: ((params: HTTPQuery) => string) | undefined;
   username?: string | undefined;
   password?: string | undefined;
@@ -72,6 +79,14 @@ export class Configuration {
 
   get middleware(): Middleware[] {
     return this.configuration.middleware ?? [];
+  }
+
+  get maxRateLimitRetries(): number {
+    const value = this.configuration.maxRateLimitRetries ?? 2;
+    if (!Number.isInteger(value) || value < 0 || value > 10) {
+      throw new RangeError('Rate limit retries must be an integer between zero and ten.');
+    }
+    return value;
   }
 
   get queryParamsStringify(): (params: HTTPQuery) => string {
@@ -111,6 +126,21 @@ export class Configuration {
   get credentials(): RequestCredentials | undefined {
     return this.configuration.credentials;
   }
+}
+
+function waitForRateLimit(delay: number, signal?: AbortSignal | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    signal?.throwIfAborted();
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, delay);
+    const abort = (): void => {
+      clearTimeout(timer);
+      reject(signal?.reason);
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }
 
 export const DefaultConfig = new Configuration();
@@ -161,10 +191,16 @@ export class BaseAPI {
       }
     }
 
-    const headers = cleanHeaders({
+    const requestHeaders: HTTPHeaders = {
       ...(this.configuration.headers ?? {}),
       ...context.headers
-    });
+    };
+    // Case-insensitive so a caller's 'user-agent' replaces the default instead of
+    // adding a second key — fetch folds same-name headers into one comma-joined value.
+    if (findHeaderKey(requestHeaders, 'User-Agent') === undefined) {
+      requestHeaders['User-Agent'] = DEFAULT_USER_AGENT;
+    }
+    const headers = cleanHeaders(requestHeaders);
 
     const initOverrideFn: InitOverrideFunction =
       typeof initOverrides === 'function'
@@ -214,9 +250,23 @@ export class BaseAPI {
     }
 
     let response: Response | undefined;
+    const maxRetries = this.configuration.maxRateLimitRetries;
     try {
-      response = await (this.configuration.fetchApi ?? fetch)(fetchParams.url, fetchParams.init);
+      for (let attempt = 0; ; attempt += 1) {
+        fetchParams.init.signal?.throwIfAborted();
+        response = await (this.configuration.fetchApi ?? fetch)(fetchParams.url, fetchParams.init);
+        if (response.status !== 429 || attempt >= maxRetries) break;
+        const header = response.headers.get('Retry-After')?.trim();
+        const date = header && /^\w{3},/.test(header) ? Date.parse(header) : NaN;
+        let delay = 1000 * 2 ** Math.min(attempt, 5);
+        if (header && /^\d+$/.test(header)) delay = Number(header) * 1000;
+        else if (Number.isFinite(date)) delay = Math.max(0, date - Date.now());
+        if (delay > 60000 || fetchParams.init.body instanceof ReadableStream) break;
+        await response.body?.cancel();
+        await waitForRateLimit(delay, fetchParams.init.signal);
+      }
     } catch (error) {
+      response = undefined;
       for (const middleware of this.middleware) {
         if (middleware.onError) {
           response = await middleware.onError({

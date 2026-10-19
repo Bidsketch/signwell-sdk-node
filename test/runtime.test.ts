@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   ApiConnectionError,
   ApiTimeoutError,
@@ -63,6 +63,65 @@ async function collectAsync<T>(iterable: AsyncIterable<T>): Promise<T[]> {
 }
 
 describe('runtime', () => {
+  it('replays POST bodies after explicit 429s and tolerates future response enums', async () => {
+    const bodies: Array<RequestInit['body']> = [];
+    const api = new DocumentApi(new Configuration({
+      fetchApi: async (_url, init) => {
+        bodies.push(init?.body);
+        return bodies.length === 1
+          ? new Response('limited', { status: 429, headers: { 'Retry-After': '0' } })
+          : Response.json({ id: 'doc_1', fields: [[{ date_format: 'future_format' }]] });
+      }
+    }));
+    const document = await api.createDocument({ documentRequest: { name: 'Retry document', test_mode: true } });
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).toBe(bodies[1]);
+    expect(JSON.parse(String(bodies[0])).name).toBe('Retry document');
+    expect(document.fields?.[0]?.[0]?.date_format).toBe('future_format');
+  });
+
+  it('bounds retries, honors opt-out and long waits, and preserves rate-limit errors', async () => {
+    for (const [limit, retryAfter, expected] of [[2, '0', 3], [0, '0', 1], [2, '120', 1]] as const) {
+      let calls = 0;
+      const api = new DocumentApi(new Configuration({ maxRateLimitRetries: limit, fetchApi: async () => {
+        calls += 1;
+        return new Response('{}', { status: 429, headers: { 'Retry-After': retryAfter } });
+      } }));
+      await expect(api.getDocument({ id: 'doc_1' })).rejects.toBeInstanceOf(RateLimitError);
+      expect(calls).toBe(expected);
+    }
+  });
+
+  it('backs off, cancels pending retries, and retries downloads without rejected content', async () => {
+    vi.useFakeTimers();
+    try {
+      let calls = 0;
+      const api = new DocumentApi(new Configuration({ fetchApi: async () => {
+        calls += 1;
+        return calls === 1 ? new Response('limited', { status: 429 })
+          : new Response('%PDF', { headers: { 'Content-Type': 'application/pdf' } });
+      } }));
+      const pending = api.getCompletedPdf({ id: 'doc_1' });
+      await vi.advanceTimersByTimeAsync(999);
+      expect(calls).toBe(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await (await pending).text()).toBe('%PDF');
+      const controller = new AbortController();
+      const cancelled = new DocumentApi(new Configuration({ fetchApi: async () => {
+        calls += 1;
+        return new Response('{}', { status: 429, headers: { 'Retry-After': '30' } });
+      } })).getDocument({ id: 'doc_1' }, { signal: controller.signal });
+      const assertion = expect(cancelled).rejects.toBeInstanceOf(ApiTimeoutError);
+      await vi.advanceTimersByTimeAsync(0);
+      controller.abort();
+      await assertion;
+      await vi.advanceTimersByTimeAsync(30000);
+      expect(calls).toBe(3);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects empty and blank document IDs before making a request', async () => {
     let calls = 0;
     const api = new DocumentApi(new Configuration({
@@ -109,6 +168,7 @@ describe('runtime', () => {
 
   it('exposes rate limit headers on status errors', async () => {
     const api = new DocumentApi(new Configuration({
+      maxRateLimitRetries: 0,
       apiKey: 'test_key',
       fetchApi: async () => new Response(JSON.stringify({ message: 'Too many requests' }), {
         status: 429,
@@ -495,6 +555,62 @@ describe('runtime', () => {
     await api.getDocument({ id: 'doc_123' });
 
     expect(apiKeyHeader).toBe('generated_key');
+  });
+
+  it('sends the SignWell default User-Agent', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' });
+
+    expect(userAgent).toMatch(/^signwell-sdk-node\/\d+\.\d+\.\d+/);
+  });
+
+  it('lets a configured User-Agent replace the default at any casing', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      headers: { 'user-agent': 'MyApp/1.0' },
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' });
+
+    // Replaced, not comma-joined with the default.
+    expect(userAgent).toBe('MyApp/1.0');
+  });
+
+  it('lets a per-request User-Agent replace the default at any casing', async () => {
+    let userAgent: string | null = null;
+    const api = new DocumentApi(new Configuration({
+      apiKey: 'test_key',
+      fetchApi: async (_url, init) => {
+        userAgent = new Headers(init.headers).get('User-Agent');
+        return new Response(JSON.stringify({ id: 'doc_123' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }));
+
+    await api.getDocument({ id: 'doc_123' }, { headers: { 'user-agent': 'PerRequest/2.0' } });
+
+    expect(userAgent).toBe('PerRequest/2.0');
   });
 
   it('merges initOverrides headers and serializes body with the final content type', async () => {

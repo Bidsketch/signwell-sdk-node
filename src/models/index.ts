@@ -60,7 +60,6 @@ export interface AccountInfoResponse {
     preferences?: AccountInfoResponsePreferences;
 }
 
-
 /**
  * 
  * @export
@@ -92,7 +91,6 @@ export interface AccountInfoResponseActiveUsersInner {
      */
     has_google_registration?: boolean;
 }
-
 
 /**
  * 
@@ -186,7 +184,6 @@ export interface AccountInfoResponsePreferences {
     enable_nom151_compliance?: boolean;
 }
 
-
 /**
  * 
  * @export
@@ -260,6 +257,18 @@ export interface AdditionalFieldsInnerInner {
      */
     validation?: TextValidation;
     /**
+     * Text fields with custom validation only: the regex pattern used to validate field values. Required when validation is set to custom.
+     * @type {string}
+     * @memberof AdditionalFieldsInnerInner
+     */
+    validation_regex?: string;
+    /**
+     * Text fields with custom validation only: the error message shown to the recipient when their input doesn't match the regex pattern. Required when validation is set to custom.
+     * @type {string}
+     * @memberof AdditionalFieldsInnerInner
+     */
+    validation_regex_error_message?: string;
+    /**
      * Text fields only: whether the field width will stay fixed and text will display in multiple lines, rather than one long line. If set to `false` the field width will automatically grow horizontally to fit text on one line. Defaults to `false`.
      * @type {boolean}
      * @memberof AdditionalFieldsInnerInner
@@ -317,19 +326,16 @@ export interface AdditionalFieldsInnerInner {
 
 
 
-
 /**
  * @type AdditionalFieldsInnerInnerValue
  * Varies according to the field type. Text fields accept strings or numbers. Date fields accept Iso8601 date strings. CheckBoxes accept booleans. Signature and Initials fields can't be signed through API requests. Autofill text fields accept strings or numbers.
  * @export
  */
-export type AdditionalFieldsInnerInnerValue = boolean | number | string;
-/**
+export type AdditionalFieldsInnerInnerValue = boolean | number | string;/**
  * Additional files to be appended to the document. Will not replace existing files from the template. Document files can be uploaded by specifying a file URL or base64 string. Either `file_url` or `file_base64` must be present (not both). Valid file types are: .pdf, .docx, .jpg, .png, .ppt, .xls, .pages, and .txt.
  * @export
  */
 export type AdditionalFilesInner = { name: string; file_url: string; file_base64?: never } | { name: string; file_base64: string; file_url?: never };
-
 
 /**
  * API application details
@@ -381,7 +387,6 @@ export interface ApiApplicationResponse {
     preferences?: ApiApplicationResponsePreferences;
 }
 
-
 /**
  * 
  * @export
@@ -413,7 +418,6 @@ export interface ApiApplicationResponseOwner {
      */
     email: string;
 }
-
 
 /**
  * 
@@ -453,7 +457,6 @@ export interface ApiApplicationResponsePreferences {
     primary_color?: string | null;
 }
 
-
 /**
  * Attachment request information
  * @export
@@ -480,7 +483,6 @@ export interface AttachmentRequestInfo {
     required: boolean;
 }
 
-
 /**
  * 
  * @export
@@ -506,7 +508,6 @@ export interface AttachmentRequestsInner {
      */
     required?: boolean;
 }
-
 
 /**
  * Bulk send creation response
@@ -558,7 +559,6 @@ export interface BulkSendCreateResponse {
     status: string;
 }
 
-
 /**
  * 
  * @export
@@ -572,13 +572,12 @@ export interface BulkSendCsvRequest {
      */
     template_ids: Array<string>;
     /**
-     * A RFC 4648 base64 string of the template CSV file to be validated.
+     * A RFC 4648 base64 string of the template CSV file to be validated. While 21 CFR Part 11 is enabled, every recipient needs a name: the CSV must carry a name column next to each placeholder email column (for example `signer_name` alongside `signer_email`), and each row must fill that name in wherever it carries the matching email, otherwise it returns a 422. A row that leaves both the email and the name blank sends nothing to that placeholder, so no name is needed there.
      * @type {string}
      * @memberof BulkSendCsvRequest
      */
     bulk_send_csv: string;
 }
-
 
 /**
  * Base64-encoded CSV template
@@ -593,7 +592,6 @@ export interface BulkSendCsvTemplateResponse {
      */
     data: string;
 }
-
 
 /**
  * Paginated list of documents in a bulk send
@@ -675,7 +673,6 @@ export interface BulkSendDocumentsResponse {
     total_pages: number;
 }
 
-
 /**
  * Bulk send summary in list responses
  * @export
@@ -744,7 +741,6 @@ export interface BulkSendListItem {
     template_ids: Array<string>;
 }
 
-
 /**
  * List of bulk sends with pagination
  * @export
@@ -788,7 +784,6 @@ export interface BulkSendListResponse {
      */
     total_pages: number;
 }
-
 
 /**
  * Bulk send details
@@ -858,7 +853,6 @@ export interface BulkSendResponse {
     templates?: Array<BulkSendResponseTemplatesInner>;
 }
 
-
 /**
  * 
  * @export
@@ -878,7 +872,6 @@ export interface BulkSendResponseTemplatesInner {
      */
     name: string;
 }
-
 
 /**
  * Validated bulk send CSV response with defaults applied
@@ -935,7 +928,6 @@ export interface BulkSendValidateCsvResponse {
      */
     apply_signing_order?: boolean;
 }
-
 
 /**
  * Checkbox group configuration
@@ -1001,7 +993,6 @@ export interface CheckboxGroupInfo {
 
 
 
-
 /**
  * 
  * @export
@@ -1060,7 +1051,6 @@ export interface CheckboxGroupsInner {
 
 
 
-
 /**
  * Validation rule for checkbox groups
  * @export
@@ -1073,14 +1063,12 @@ export enum CheckboxValidation {
     Exact = 'exact',
     UnknownDefaultOpenApi = '11184809'
 }
-
 /**
  * @type CompletedPdfResponse
  * 
  * @export
  */
-export type CompletedPdfResponse = Blob | CompletedPdfUrlResponse;
-/**
+export type CompletedPdfResponse = Blob | CompletedPdfUrlResponse;/**
  * JSON response containing the URL to the completed PDF file (returned when url_only=true)
  * @export
  * @interface CompletedPdfUrlResponse
@@ -1094,6 +1082,298 @@ export interface CompletedPdfUrlResponse {
     file_url: string;
 }
 
+/**
+ * Audit record of a signer-side decision about a CL rule that fired against a completed field.
+ * @export
+ * @interface ConditionalLogicDecisionInfo
+ */
+export interface ConditionalLogicDecisionInfo {
+    /**
+     * External ID of the conditional rule that fired
+     * @type {string}
+     * @memberof ConditionalLogicDecisionInfo
+     */
+    rule_id: string;
+    /**
+     * api_id of the field the decision applies to
+     * @type {string}
+     * @memberof ConditionalLogicDecisionInfo
+     */
+    field_api_id: string;
+    /**
+     * Whether the signer kept the existing signature or the value was cleared
+     * @type {string}
+     * @memberof ConditionalLogicDecisionInfo
+     */
+    decision_type: ConditionalLogicDecisionInfoDecisionTypeEnum;
+    /**
+     * When the decision was recorded
+     * @type {string}
+     * @memberof ConditionalLogicDecisionInfo
+     */
+    decided_at: string;
+    /**
+     * Human-readable summary of the decision
+     * @type {string}
+     * @memberof ConditionalLogicDecisionInfo
+     */
+    description?: string;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalLogicDecisionInfoDecisionTypeEnum {
+    KeptSignature = 'kept_signature',
+    ClearedValue = 'cleared_value',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * Conditional rule configuration
+ * @export
+ * @interface ConditionalRuleInfo
+ */
+export interface ConditionalRuleInfo {
+    /**
+     * Conditional rule ID
+     * @type {string}
+     * @memberof ConditionalRuleInfo
+     */
+    id: string;
+    /**
+     * api_id of the field that owns the rule, or the external_id of a checkbox group when the rule is owned by a group (groups have no api_id)
+     * @type {string}
+     * @memberof ConditionalRuleInfo
+     */
+    target_id: string;
+    /**
+     * Action applied to action_field_ids when the conditions are met
+     * @type {string}
+     * @memberof ConditionalRuleInfo
+     */
+    action_type: ConditionalRuleInfoActionTypeEnum;
+    /**
+     * api_ids of fields the rule affects when triggered
+     * @type {Array<string>}
+     * @memberof ConditionalRuleInfo
+     */
+    action_field_ids?: Array<string>;
+    /**
+     * 
+     * @type {Array<ConditionalRuleInfoConditionsInner>}
+     * @memberof ConditionalRuleInfo
+     */
+    conditions?: Array<ConditionalRuleInfoConditionsInner>;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleInfoActionTypeEnum {
+    Show = 'show',
+    Hide = 'hide',
+    Require = 'require',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * 
+ * @export
+ * @interface ConditionalRuleInfoConditionsInner
+ */
+export interface ConditionalRuleInfoConditionsInner {
+    /**
+     * How field_api_ids combine within this condition
+     * @type {string}
+     * @memberof ConditionalRuleInfoConditionsInner
+     */
+    condition_type?: ConditionalRuleInfoConditionsInnerConditionTypeEnum;
+    /**
+     * Field state that satisfies this condition
+     * @type {string}
+     * @memberof ConditionalRuleInfoConditionsInner
+     */
+    status?: ConditionalRuleInfoConditionsInnerStatusEnum;
+    /**
+     * How this condition joins with the next one in the rule
+     * @type {string}
+     * @memberof ConditionalRuleInfoConditionsInner
+     */
+    join_operator?: ConditionalRuleInfoConditionsInnerJoinOperatorEnum;
+    /**
+     * api_ids of fields evaluated by this condition
+     * @type {Array<string>}
+     * @memberof ConditionalRuleInfoConditionsInner
+     */
+    field_api_ids?: Array<string>;
+    /**
+     * Order of this condition within the rule
+     * @type {number}
+     * @memberof ConditionalRuleInfoConditionsInner
+     */
+    position?: number;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleInfoConditionsInnerConditionTypeEnum {
+    AnyOf = 'any_of',
+    AllOf = 'all_of',
+    NoneOf = 'none_of',
+    NotAllOf = 'not_all_of',
+    UnknownDefaultOpenApi = '11184809'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleInfoConditionsInnerStatusEnum {
+    Completed = 'completed',
+    NotCompleted = 'not_completed',
+    UnknownDefaultOpenApi = '11184809'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleInfoConditionsInnerJoinOperatorEnum {
+    AndOperator = 'and_operator',
+    OrOperator = 'or_operator',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * A conditional logic rule. Create requires target_id, action_type, action_field_ids and conditions; id and deleted are ignored on create. On an update (template update or document update-and-send) the rules are an incremental upsert keyed by id: send id + the fields to change to modify a rule, id + deleted: true to remove it, or omit id to add a new rule.
+ * @export
+ * @interface ConditionalRuleRequest
+ */
+export interface ConditionalRuleRequest {
+    /**
+     * The rule's persistent ID. Ignored on create (every rule is new). On an update (template update or document update-and-send) include it to modify an existing rule, or pair it with `deleted: true` to remove the rule; omit it to add a new rule.
+     * @type {string}
+     * @memberof ConditionalRuleRequest
+     */
+    id?: string;
+    /**
+     * Only meaningful on an update (template update or document update-and-send): set to true together with the rule's `id` to remove that rule. Ignored on create — there is no existing rule to delete.
+     * @type {boolean}
+     * @memberof ConditionalRuleRequest
+     */
+    deleted?: boolean;
+    /**
+     * api_id of the field that owns the rule, or the external_id of a checkbox group when the rule is owned by a group (groups have no api_id). Cannot also appear in action_field_ids (self-reference is forbidden).
+     * @type {string}
+     * @memberof ConditionalRuleRequest
+     */
+    target_id?: string;
+    /**
+     * Action applied to action_field_ids when the conditions are met: `show`, `hide`, or `require`.
+     * @type {string}
+     * @memberof ConditionalRuleRequest
+     */
+    action_type?: ConditionalRuleRequestActionTypeEnum;
+    /**
+     * api_ids of the fields the action applies to. List a checkbox group's member api_ids to target the whole group.
+     * @type {Array<string>}
+     * @memberof ConditionalRuleRequest
+     */
+    action_field_ids?: Array<string>;
+    /**
+     * The conditions that trigger the rule. At least 1, at most 5.
+     * @type {Array<ConditionalRuleRequestConditionsInner>}
+     * @memberof ConditionalRuleRequest
+     */
+    conditions?: Array<ConditionalRuleRequestConditionsInner>;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleRequestActionTypeEnum {
+    Show = 'show',
+    Hide = 'hide',
+    Require = 'require',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * 
+ * @export
+ * @interface ConditionalRuleRequestConditionsInner
+ */
+export interface ConditionalRuleRequestConditionsInner {
+    /**
+     * How the field_api_ids combine within a condition: `any_of`, `all_of`, `none_of`, or `not_all_of`.
+     * @type {string}
+     * @memberof ConditionalRuleRequestConditionsInner
+     */
+    condition_type: ConditionalRuleRequestConditionsInnerConditionTypeEnum;
+    /**
+     * The field state the condition tests for: `completed` or `not_completed`.
+     * @type {string}
+     * @memberof ConditionalRuleRequestConditionsInner
+     */
+    status: ConditionalRuleRequestConditionsInnerStatusEnum;
+    /**
+     * How this condition joins the next one in the rule: `and_operator` or `or_operator`. The first condition's value is ignored.
+     * @type {string}
+     * @memberof ConditionalRuleRequestConditionsInner
+     */
+    join_operator?: ConditionalRuleRequestConditionsInnerJoinOperatorEnum;
+    /**
+     * api_ids of the trigger fields the condition watches.
+     * @type {Array<string>}
+     * @memberof ConditionalRuleRequestConditionsInner
+     */
+    field_api_ids: Array<string>;
+    /**
+     * 1-indexed order of the condition within the rule.
+     * @type {number}
+     * @memberof ConditionalRuleRequestConditionsInner
+     */
+    position?: number;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleRequestConditionsInnerConditionTypeEnum {
+    AnyOf = 'any_of',
+    AllOf = 'all_of',
+    NoneOf = 'none_of',
+    NotAllOf = 'not_all_of',
+    UnknownDefaultOpenApi = '11184809'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleRequestConditionsInnerStatusEnum {
+    Completed = 'completed',
+    NotCompleted = 'not_completed',
+    UnknownDefaultOpenApi = '11184809'
+}
+/**
+* @export
+* @enum {string}
+*/
+export enum ConditionalRuleRequestConditionsInnerJoinOperatorEnum {
+    AndOperator = 'and_operator',
+    OrOperator = 'or_operator',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * Copied contact information
@@ -1121,7 +1401,6 @@ export interface CopiedContactInfo {
     email: string;
 }
 
-
 /**
  * 
  * @export
@@ -1142,7 +1421,6 @@ export interface CopiedContactsInner {
     email: string;
 }
 
-
 /**
  * 
  * @export
@@ -1156,7 +1434,7 @@ export interface CopiedPlaceholdersInner {
      */
     name: string;
     /**
-     * In some cases, it may be necessary to pre-fill the name and email for a placeholder because it will always be the same person for all documents created from this template. This sets the name.
+     * In some cases, it may be necessary to pre-fill the name and email for a placeholder because it will always be the same person for all documents created from this template. This sets the name. Every recipient on a 21 CFR Part 11 document needs a name, so leaving it unset means the name has to be supplied when the document is created.
      * @type {string}
      * @memberof CopiedPlaceholdersInner
      */
@@ -1169,7 +1447,6 @@ export interface CopiedPlaceholdersInner {
     preassigned_recipient_email?: string;
 }
 
-
 /**
  * 
  * @export
@@ -1177,13 +1454,13 @@ export interface CopiedPlaceholdersInner {
  */
 export interface CreateBulkSendRequest {
     /**
-     * Unique identifiers for a list of templates.
+     * Unique identifiers for a list of templates. A template that carries a pre-applied signature or initials field cannot be used while 21 CFR Part 11 is enabled, which requires every signature to be signed by the recipient: it returns a 422.
      * @type {Array<string>}
      * @memberof CreateBulkSendRequest
      */
     template_ids: Array<string>;
     /**
-     * A RFC 4648 base64 string of the template CSV file to be validated.
+     * A RFC 4648 base64 string of the template CSV file to be validated. While 21 CFR Part 11 is enabled, every recipient needs a name: the CSV must carry a name column next to each placeholder email column (for example `signer_name` alongside `signer_email`), and each row must fill that name in wherever it carries the matching email, otherwise it returns a 422. A row that leaves both the email and the name blank sends nothing to that placeholder, so no name is needed there.
      * @type {string}
      * @memberof CreateBulkSendRequest
      */
@@ -1238,7 +1515,6 @@ export interface CreateBulkSendRequest {
     custom_requester_email?: string;
 }
 
-
 /**
  * 
  * @export
@@ -1259,7 +1535,6 @@ export interface CreateWebhookRequest {
     api_application_id?: string;
 }
 
-
 /**
  * Date format for date fields. Valid values: MM/DD/YYYY, DD/MM/YYYY, YYYY/MM/DD, Month DD, YYYY, MM/DD/YYYY hh:mm:ss a. Default: MM/DD/YYYY
  * @export
@@ -1273,7 +1548,6 @@ export enum DateFormat {
     MmDdYyyyHhMmSsA = 'MM/DD/YYYY hh:mm:ss a',
     UnknownDefaultOpenApi = '11184809'
 }
-
 /**
  * Detailed option object
  * @export
@@ -1300,7 +1574,6 @@ export interface DetailedOption {
     is_other?: boolean;
 }
 
-
 /**
  * 
  * @export
@@ -1313,6 +1586,12 @@ export interface DocumentFromTemplateRequestBase {
      * @memberof DocumentFromTemplateRequest
      */
     test_mode?: boolean;
+    /**
+     * Only applies when `test_mode` is `true`. When `true`, and the document has an SMS-only recipient, sends the document owner a test-mode preview email (with a masked phone number) instead of the regular SMS sender-copy email. No SMS is sent and no credits are used, in test mode or otherwise. Defaults to `false`.
+     * @type {boolean}
+     * @memberof DocumentFromTemplateRequest
+     */
+    send_sms_test_preview_email?: boolean;
     /**
      * Use when you have to create a document from a single template. Either :template_id or :template_ids must be present in the request, not both.
      * @type {string}
@@ -1332,13 +1611,13 @@ export interface DocumentFromTemplateRequestBase {
      */
     name?: string;
     /**
-     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template).
+     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentFromTemplateRequest
      */
     subject?: string;
     /**
-     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template).
+     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentFromTemplateRequest
      */
@@ -1404,6 +1683,12 @@ export interface DocumentFromTemplateRequestBase {
      */
     embedded_signing_notifications?: boolean;
     /**
+     * 
+     * @type {EmbeddedRequest}
+     * @memberof DocumentFromTemplateRequest
+     */
+    embedded?: EmbeddedRequest;
+    /**
      * An alternative way (if you can’t use the recommended way) of placing fields in specific locations of your document by using special text tags. Useful when changing the content of your files changes the location of fields. See API documentation for “Text Tags” for details. Defaults to false.
      * @type {boolean}
      * @memberof DocumentFromTemplateRequest
@@ -1434,7 +1719,7 @@ export interface DocumentFromTemplateRequestBase {
      */
     allow_decline?: boolean;
     /**
-     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else.
+     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else. Unavailable on 21 CFR Part 11 documents: omit it and reassignment stays off, while sending `true` returns a 422.
      * @type {boolean}
      * @memberof DocumentFromTemplateRequest
      */
@@ -1451,6 +1736,18 @@ export interface DocumentFromTemplateRequestBase {
      * @memberof DocumentFromTemplateRequest
      */
     language?: string;
+    /**
+     * Conditional logic rules that show, hide, or require fields based on what a signer does to other fields. Every identifier is a field api_id. At most 10 rules per document or template.
+     * @type {Array<ConditionalRuleRequest>}
+     * @memberof DocumentFromTemplateRequest
+     */
+    conditional_rules?: Array<ConditionalRuleRequest>;
+    /**
+     * When creating a document from a template, controls how the conditional_rules in the request reconcile with the template's inherited rules: `replace` (drop inherited, use the body's rules), `append` (keep inherited, add the body's rules), or `none` (clear all rules). Required when sending conditional_rules that should not simply inherit.
+     * @type {string}
+     * @memberof DocumentFromTemplateRequest
+     */
+    conditional_rules_mode?: DocumentFromTemplateRequestConditionalRulesModeEnum;
     /**
      * Optional key-value data that can be associated with the document. If set, will be available every time the document data is returned.
      * @type {{ [key: string]: string | undefined; }}
@@ -1505,11 +1802,34 @@ export type DocumentFromTemplateRequest = Omit<DocumentFromTemplateRequestBase, 
 
 
 /**
+* @export
+* @enum {string}
+*/
+export enum DocumentFromTemplateRequestConditionalRulesModeEnum {
+    Replace = 'replace',
+    Append = 'append',
+    None = 'none',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
  * 
  * @export
  * @interface DocumentFromTemplateResponse
  */
 export interface DocumentFromTemplateResponse {
+    /**
+     * Whether 21 CFR Part 11 controls apply to this document. Read-only: the value is taken from the workspace setting when the document is created and never changes afterwards.
+     * @type {boolean}
+     * @memberof DocumentFromTemplateResponse
+     */
+    cfr_part11?: boolean;
+    /**
+     * The signing mode of a 21 CFR Part 11 document: streamlined (one final authentication) or per_signature (authentication at every signature and initials field). Null when Part 11 does not apply.
+     * @type {string}
+     * @memberof DocumentFromTemplateResponse
+     */
+    cfr_part11_signing_mode?: DocumentFromTemplateResponseCfrPart11SigningModeEnum | null;
     /**
      * 
      * @type {boolean}
@@ -1618,6 +1938,12 @@ export interface DocumentFromTemplateResponse {
      * @memberof DocumentFromTemplateResponse
      */
     archived?: boolean;
+    /**
+     * 
+     * @type {EmbeddedBranding}
+     * @memberof DocumentFromTemplateResponse
+     */
+    embedded?: EmbeddedBranding | null;
     /**
      * 
      * @type {boolean}
@@ -1732,8 +2058,30 @@ export interface DocumentFromTemplateResponse {
      * @memberof DocumentFromTemplateResponse
      */
     checkbox_groups?: Array<CheckboxGroupInfo>;
+    /**
+     * 
+     * @type {Array<ConditionalRuleInfo>}
+     * @memberof DocumentFromTemplateResponse
+     */
+    conditional_rules?: Array<ConditionalRuleInfo>;
+    /**
+     * 
+     * @type {Array<ConditionalLogicDecisionInfo>}
+     * @memberof DocumentFromTemplateResponse
+     */
+    conditional_logic_decisions?: Array<ConditionalLogicDecisionInfo>;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum DocumentFromTemplateResponseCfrPart11SigningModeEnum {
+    Streamlined = 'streamlined',
+    PerSignature = 'per_signature',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * 
@@ -1826,6 +2174,18 @@ export interface DocumentFromTemplateResponseFieldsInnerInner {
      */
     validation?: TextValidation;
     /**
+     * Text fields with custom validation only: the regex pattern used to validate field values. Required when validation is set to custom.
+     * @type {string}
+     * @memberof DocumentFromTemplateResponseFieldsInnerInner
+     */
+    validation_regex?: string;
+    /**
+     * Text fields with custom validation only: the error message shown to the recipient when their input doesn't match the regex pattern. Required when validation is set to custom.
+     * @type {string}
+     * @memberof DocumentFromTemplateResponseFieldsInnerInner
+     */
+    validation_regex_error_message?: string;
+    /**
      * 
      * @type {DocumentResponseFieldsInnerInnerValue}
      * @memberof DocumentFromTemplateResponseFieldsInnerInner
@@ -1883,7 +2243,6 @@ export interface DocumentFromTemplateResponseFieldsInnerInner {
 
 
 
-
 /**
  * 
  * @export
@@ -1909,7 +2268,6 @@ export interface DocumentFromTemplateResponseFieldsInnerInnerRecipient {
      */
     role?: string;
 }
-
 
 /**
  * 
@@ -1966,6 +2324,18 @@ export interface DocumentFromTemplateResponseRecipientsInner {
      */
     send_email_delay?: number | null;
     /**
+     * How the recipient is notified: email (default), sms, or email_and_sms.
+     * @type {string}
+     * @memberof DocumentFromTemplateResponseRecipientsInner
+     */
+    delivery_method?: DocumentFromTemplateResponseRecipientsInnerDeliveryMethodEnum;
+    /**
+     * 
+     * @type {DocumentResponseRecipientsInnerSms}
+     * @memberof DocumentFromTemplateResponseRecipientsInner
+     */
+    sms?: DocumentResponseRecipientsInnerSms;
+    /**
      * 
      * @type {number}
      * @memberof DocumentFromTemplateResponseRecipientsInner
@@ -2009,6 +2379,12 @@ export interface DocumentFromTemplateResponseRecipientsInner {
     passcode?: string | null;
     /**
      * 
+     * @type {DocumentResponseRecipientsInnerPasscodeDelivery}
+     * @memberof DocumentFromTemplateResponseRecipientsInner
+     */
+    passcode_delivery?: DocumentResponseRecipientsInnerPasscodeDelivery;
+    /**
+     * 
      * @type {string}
      * @memberof DocumentFromTemplateResponseRecipientsInner
      */
@@ -2021,6 +2397,17 @@ export interface DocumentFromTemplateResponseRecipientsInner {
     placeholder_name?: string;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum DocumentFromTemplateResponseRecipientsInnerDeliveryMethodEnum {
+    Email = 'email',
+    Sms = 'sms',
+    EmailAndSms = 'email_and_sms',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * List of documents with pagination
@@ -2066,7 +2453,6 @@ export interface DocumentListResponse {
     total_pages: number;
 }
 
-
 /**
  * 
  * @export
@@ -2080,6 +2466,12 @@ export interface DocumentRequest {
      */
     test_mode?: boolean;
     /**
+     * Only applies when `test_mode` is `true`. When `true`, and the document has an SMS-only recipient, sends the document owner a test-mode preview email (with a masked phone number) instead of the regular SMS sender-copy email. No SMS is sent and no credits are used, in test mode or otherwise. Defaults to `false`.
+     * @type {boolean}
+     * @memberof DocumentRequest
+     */
+    send_sms_test_preview_email?: boolean;
+    /**
      * Document files can be uploaded by specifying a file URL or base64 string. Either `file_url` or `file_base64` must be present (not both). Valid file types are: .pdf, .doc, .docx, .pages, .ppt, .pptx, .key, .xls, .xlsx, .numbers, .jpg, .jpeg, .png, .tiff, .tif, .webp, .html, and .htm
      * @type {Array<FilesInner>}
      * @memberof DocumentRequest
@@ -2092,13 +2484,13 @@ export interface DocumentRequest {
      */
     name?: string;
     /**
-     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template).
+     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentRequest
      */
     subject?: string;
     /**
-     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template).
+     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentRequest
      */
@@ -2116,7 +2508,7 @@ export interface DocumentRequest {
      */
     draft?: boolean;
     /**
-     * When set to true the document will enter self-sign mode, which allows the document creator to sign and complete a document without any field setup. Must use the embedded_edit_url in the response and (if embedding) the embedded requesting workflow.
+     * When set to true the document will enter self-sign mode, which allows the document creator to sign and complete a document without any field setup. Must use the embedded_edit_url in the response and (if embedding) the embedded requesting workflow. Unavailable on 21 CFR Part 11 documents, which require every signature to come from an authenticated signer: sending `true` returns a 422.
      * @type {boolean}
      * @memberof DocumentRequest
      */
@@ -2164,6 +2556,12 @@ export interface DocumentRequest {
      */
     embedded_signing_notifications?: boolean;
     /**
+     * 
+     * @type {EmbeddedRequest}
+     * @memberof DocumentRequest
+     */
+    embedded?: EmbeddedRequest;
+    /**
      * An alternative way (if you can’t use the recommended way) of placing fields in specific locations of your document by using special text tags. Useful when changing the content of your files changes the location of fields. See API documentation for “Text Tags” for details. Defaults to false.
      * @type {boolean}
      * @memberof DocumentRequest
@@ -2194,7 +2592,7 @@ export interface DocumentRequest {
      */
     allow_decline?: boolean;
     /**
-     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else.
+     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else. Unavailable on 21 CFR Part 11 documents: omit it and reassignment stays off, while sending `true` returns a 422.
      * @type {boolean}
      * @memberof DocumentRequest
      */
@@ -2211,6 +2609,12 @@ export interface DocumentRequest {
      * @memberof DocumentRequest
      */
     language?: string;
+    /**
+     * Conditional logic rules that show, hide, or require fields based on what a signer does to other fields. Every identifier is a field api_id. At most 10 rules per document or template.
+     * @type {Array<ConditionalRuleRequest>}
+     * @memberof DocumentRequest
+     */
+    conditional_rules?: Array<ConditionalRuleRequest>;
     /**
      * Optional key-value data that can be associated with the document. If set, will be available every time the document data is returned.
      * @type {{ [key: string]: string | undefined; }}
@@ -2249,13 +2653,24 @@ export interface DocumentRequest {
     checkbox_groups?: Array<CheckboxGroupsInner>;
 }
 
-
 /**
  * 
  * @export
  * @interface DocumentResponse
  */
 export interface DocumentResponse {
+    /**
+     * Whether 21 CFR Part 11 controls apply to this document. Read-only: the value is taken from the workspace setting when the document is created and never changes afterwards.
+     * @type {boolean}
+     * @memberof DocumentResponse
+     */
+    cfr_part11?: boolean;
+    /**
+     * The signing mode of a 21 CFR Part 11 document: streamlined (one final authentication) or per_signature (authentication at every signature and initials field). Null when Part 11 does not apply.
+     * @type {string}
+     * @memberof DocumentResponse
+     */
+    cfr_part11_signing_mode?: DocumentResponseCfrPart11SigningModeEnum | null;
     /**
      * 
      * @type {boolean}
@@ -2352,6 +2767,12 @@ export interface DocumentResponse {
      * @memberof DocumentResponse
      */
     archived?: boolean;
+    /**
+     * 
+     * @type {EmbeddedBranding}
+     * @memberof DocumentResponse
+     */
+    embedded?: EmbeddedBranding | null;
     /**
      * 
      * @type {boolean}
@@ -2478,8 +2899,30 @@ export interface DocumentResponse {
      * @memberof DocumentResponse
      */
     checkbox_groups?: Array<CheckboxGroupInfo>;
+    /**
+     * 
+     * @type {Array<ConditionalRuleInfo>}
+     * @memberof DocumentResponse
+     */
+    conditional_rules?: Array<ConditionalRuleInfo>;
+    /**
+     * 
+     * @type {Array<ConditionalLogicDecisionInfo>}
+     * @memberof DocumentResponse
+     */
+    conditional_logic_decisions?: Array<ConditionalLogicDecisionInfo>;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum DocumentResponseCfrPart11SigningModeEnum {
+    Streamlined = 'streamlined',
+    PerSignature = 'per_signature',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * 
@@ -2506,7 +2949,6 @@ export interface DocumentResponseAttachmentRequestsInner {
      */
     required?: boolean;
 }
-
 
 /**
  * 
@@ -2599,6 +3041,18 @@ export interface DocumentResponseFieldsInnerInner {
      */
     validation?: TextValidation;
     /**
+     * Text fields with custom validation only: the regex pattern used to validate field values. Required when validation is set to custom.
+     * @type {string}
+     * @memberof DocumentResponseFieldsInnerInner
+     */
+    validation_regex?: string;
+    /**
+     * Text fields with custom validation only: the error message shown to the recipient when their input doesn't match the regex pattern. Required when validation is set to custom.
+     * @type {string}
+     * @memberof DocumentResponseFieldsInnerInner
+     */
+    validation_regex_error_message?: string;
+    /**
      * 
      * @type {DocumentResponseFieldsInnerInnerValue}
      * @memberof DocumentResponseFieldsInnerInner
@@ -2656,7 +3110,6 @@ export interface DocumentResponseFieldsInnerInner {
 
 
 
-
 /**
  * 
  * @export
@@ -2683,7 +3136,6 @@ export interface DocumentResponseFieldsInnerInnerOptionsInner {
     is_other?: boolean;
 }
 
-
 /**
  * 
  * @export
@@ -2704,14 +3156,12 @@ export interface DocumentResponseFieldsInnerInnerRecipient {
     name: string;
 }
 
-
 /**
  * @type DocumentResponseFieldsInnerInnerValue
  * 
  * @export
  */
-export type DocumentResponseFieldsInnerInnerValue = boolean | number | string;
-/**
+export type DocumentResponseFieldsInnerInnerValue = boolean | number | string;/**
  * 
  * @export
  * @interface DocumentResponseRecipientsInner
@@ -2766,6 +3216,18 @@ export interface DocumentResponseRecipientsInner {
      */
     send_email_delay?: number | null;
     /**
+     * How the recipient is notified: email (default), sms, or email_and_sms.
+     * @type {string}
+     * @memberof DocumentResponseRecipientsInner
+     */
+    delivery_method?: DocumentResponseRecipientsInnerDeliveryMethodEnum;
+    /**
+     * 
+     * @type {DocumentResponseRecipientsInnerSms}
+     * @memberof DocumentResponseRecipientsInner
+     */
+    sms?: DocumentResponseRecipientsInnerSms;
+    /**
      * 
      * @type {number}
      * @memberof DocumentResponseRecipientsInner
@@ -2809,12 +3271,105 @@ export interface DocumentResponseRecipientsInner {
     passcode?: string | null;
     /**
      * 
+     * @type {DocumentResponseRecipientsInnerPasscodeDelivery}
+     * @memberof DocumentResponseRecipientsInner
+     */
+    passcode_delivery?: DocumentResponseRecipientsInnerPasscodeDelivery;
+    /**
+     * 
      * @type {string}
      * @memberof DocumentResponseRecipientsInner
      */
     status?: string | null;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum DocumentResponseRecipientsInnerDeliveryMethodEnum {
+    Email = 'email',
+    Sms = 'sms',
+    EmailAndSms = 'email_and_sms',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * 
+ * @export
+ * @interface DocumentResponseRecipientsInnerPasscodeDelivery
+ */
+export interface DocumentResponseRecipientsInnerPasscodeDelivery {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DocumentResponseRecipientsInnerPasscodeDelivery
+     */
+    enabled?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof DocumentResponseRecipientsInnerPasscodeDelivery
+     */
+    methods?: Array<string> | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DocumentResponseRecipientsInnerPasscodeDelivery
+     */
+    expire_after_access?: boolean;
+}
+
+/**
+ * SMS delivery metadata. Only present when delivery_method includes SMS.
+ * @export
+ * @interface DocumentResponseRecipientsInnerSms
+ */
+export interface DocumentResponseRecipientsInnerSms {
+    /**
+     * Masked phone number; the full number never leaves the API.
+     * @type {string}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    phone_number_masked?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    send_sms?: boolean | null;
+    /**
+     * 
+     * @type {number}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    send_sms_delay?: number | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    delivery_status?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    message_type?: string | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    failed?: boolean | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof DocumentResponseRecipientsInnerSms
+     */
+    failed_details?: string | null;
+}
 
 /**
  * List of templates with pagination
@@ -2860,7 +3415,6 @@ export interface DocumentTemplateListResponse {
     total_pages: number;
 }
 
-
 /**
  * 
  * @export
@@ -2880,13 +3434,13 @@ export interface DocumentTemplateRequest {
      */
     name?: string;
     /**
-     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template).
+     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentTemplateRequest
      */
     subject?: string;
     /**
-     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template).
+     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentTemplateRequest
      */
@@ -2952,7 +3506,7 @@ export interface DocumentTemplateRequest {
      */
     allow_decline?: boolean;
     /**
-     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else.
+     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else. Unavailable on 21 CFR Part 11 documents: omit it and reassignment stays off, while sending `true` returns a 422.
      * @type {boolean}
      * @memberof DocumentTemplateRequest
      */
@@ -2969,6 +3523,12 @@ export interface DocumentTemplateRequest {
      * @memberof DocumentTemplateRequest
      */
     language?: string;
+    /**
+     * Conditional logic rules that show, hide, or require fields based on what a signer does to other fields. Every identifier is a field api_id. At most 10 rules per document or template.
+     * @type {Array<ConditionalRuleRequest>}
+     * @memberof DocumentTemplateRequest
+     */
+    conditional_rules?: Array<ConditionalRuleRequest>;
     /**
      * Optional key-value data that can be associated with the document. If set, will be available every time the document data is returned.
      * @type {{ [key: string]: string | undefined; }}
@@ -3000,7 +3560,6 @@ export interface DocumentTemplateRequest {
      */
     checkbox_groups?: Array<TemplateCheckboxGroupsInner>;
 }
-
 
 /**
  * 
@@ -3188,8 +3747,13 @@ export interface DocumentTemplateResponse {
      * @memberof DocumentTemplateResponse
      */
     checkbox_groups?: Array<CheckboxGroupInfo>;
+    /**
+     * 
+     * @type {Array<ConditionalRuleInfo>}
+     * @memberof DocumentTemplateResponse
+     */
+    conditional_rules?: Array<ConditionalRuleInfo>;
 }
-
 
 /**
  * 
@@ -3240,7 +3804,6 @@ export interface DocumentTemplateResponseCopiedPlaceholdersInner {
      */
     preassigned_recipient_email?: string;
 }
-
 
 /**
  * 
@@ -3296,8 +3859,13 @@ export interface DocumentTemplateResponsePlaceholdersInner {
      * @memberof DocumentTemplateResponsePlaceholdersInner
      */
     attachment_requests?: Array<AttachmentRequestInfo>;
+    /**
+     * 
+     * @type {DocumentResponseRecipientsInnerPasscodeDelivery}
+     * @memberof DocumentTemplateResponsePlaceholdersInner
+     */
+    passcode_delivery?: DocumentResponseRecipientsInnerPasscodeDelivery;
 }
-
 
 /**
  * 
@@ -3312,13 +3880,13 @@ export interface DocumentTemplateUpdateRequest {
      */
     name?: string;
     /**
-     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template).
+     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentTemplateUpdateRequest
      */
     subject?: string;
     /**
-     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template).
+     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof DocumentTemplateUpdateRequest
      */
@@ -3366,7 +3934,7 @@ export interface DocumentTemplateUpdateRequest {
      */
     allow_decline?: boolean;
     /**
-     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else.
+     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else. Unavailable on 21 CFR Part 11 documents: omit it and reassignment stays off, while sending `true` returns a 422.
      * @type {boolean}
      * @memberof DocumentTemplateUpdateRequest
      */
@@ -3377,6 +3945,12 @@ export interface DocumentTemplateUpdateRequest {
      * @memberof DocumentTemplateUpdateRequest
      */
     decline_redirect_url?: string;
+    /**
+     * Conditional logic rules that show, hide, or require fields based on what a signer does to other fields. Every identifier is a field api_id. At most 10 rules per document or template.
+     * @type {Array<ConditionalRuleRequest>}
+     * @memberof DocumentTemplateUpdateRequest
+     */
+    conditional_rules?: Array<ConditionalRuleRequest>;
     /**
      * Optional key-value data that can be associated with the document. If set, will be available every time the document data is returned.
      * @type {{ [key: string]: string | undefined; }}
@@ -3397,13 +3971,145 @@ export interface DocumentTemplateUpdateRequest {
     checkbox_groups?: Array<TemplateCheckboxGroupsInner>;
 }
 
-
 /**
  * @type DropdownOption
  * A dropdown option - either a simple string or a detailed object with name and optional api_id
  * @export
  */
-export type DropdownOption = DetailedOption | string;
+export type DropdownOption = DetailedOption | string;/**
+ * The branding the caller set on THIS document, echoed back. Null when the caller set none: the document then renders with the API Application, workspace or system branding, and that resolved branding is deliberately not reported here.
+ * @export
+ * @interface EmbeddedBranding
+ */
+export interface EmbeddedBranding {
+    /**
+     * 
+     * @type {EmbeddedBrandingBranding}
+     * @memberof EmbeddedBranding
+     */
+    branding: EmbeddedBrandingBranding;
+}
+
+/**
+ * Only the properties actually set on the document. Every one is optional: an unset property is absent rather than null, because null is how a request clears one.
+ * @export
+ * @interface EmbeddedBrandingBranding
+ */
+export interface EmbeddedBrandingBranding {
+    /**
+     * Write-only. Reports only that a logo was set, never its URL or Base64 payload.
+     * @type {string}
+     * @memberof EmbeddedBrandingBranding
+     */
+    company_logo?: EmbeddedBrandingBrandingCompanyLogoEnum;
+    /**
+     * Hex, as #RRGGBB.
+     * @type {string}
+     * @memberof EmbeddedBrandingBranding
+     */
+    accent_color?: string;
+    /**
+     * Hex, as #RRGGBB.
+     * @type {string}
+     * @memberof EmbeddedBrandingBranding
+     */
+    button_label_color?: string;
+    /**
+     * Hex, as #RRGGBB.
+     * @type {string}
+     * @memberof EmbeddedBrandingBranding
+     */
+    link_color?: string;
+    /**
+     * Pixels, 0 to 25.
+     * @type {number}
+     * @memberof EmbeddedBrandingBranding
+     */
+    button_border_radius?: number;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum EmbeddedBrandingBrandingCompanyLogoEnum {
+    Provided = 'provided',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * Branding for this document's embedded requesting and signing experiences. Every property is optional and independent. A property you supply overrides the selected API Application; one you omit inherits from it, then from the SignWell default. `company_logo` has one extra step between those two: the account's Settings > Branding logo, which applies on paid plans only. The colors and the border radius have no account step — omitting one falls straight through to the SignWell default. On Update and Send Document the object is a patch: only the properties you send change, and a property sent as `null` clears your override so the value inherits again. Sending `branding` itself as `null` clears every property.
+ * @export
+ * @interface EmbeddedBrandingRequest
+ */
+export interface EmbeddedBrandingRequest {
+    /**
+     * 
+     * @type {EmbeddedBrandingRequestCompanyLogo}
+     * @memberof EmbeddedBrandingRequest
+     */
+    company_logo?: EmbeddedBrandingRequestCompanyLogo | null;
+    /**
+     * Accent color for this document's embedded pages, as a 6-digit HEX value. Returned normalized to `#RRGGBB`.
+     * @type {string}
+     * @memberof EmbeddedBrandingRequest
+     */
+    accent_color?: string | null;
+    /**
+     * Button label color for this document's embedded pages, as a 6-digit HEX value. Returned normalized to `#RRGGBB`.
+     * @type {string}
+     * @memberof EmbeddedBrandingRequest
+     */
+    button_label_color?: string | null;
+    /**
+     * Link color for this document's embedded pages, as a 6-digit HEX value. Returned normalized to `#RRGGBB`.
+     * @type {string}
+     * @memberof EmbeddedBrandingRequest
+     */
+    link_color?: string | null;
+    /**
+     * Corner radius of buttons on this document's embedded pages, in pixels. Must be between 0 and 25.
+     * @type {number}
+     * @memberof EmbeddedBrandingRequest
+     */
+    button_border_radius?: number | null;
+}
+
+/**
+ * Logo shown on this document's embedded pages. Supply either `file_url` or `file_base64`, never both — sending both returns a `422`. Sending `company_logo` replaces the logo outright, so whichever source you omit is cleared; sending it as `null` removes the logo. Recommended size is 300 x 60 px with a transparent background; these are recommendations, not validated. In responses this property is `"provided"` — the URL and the Base64 payload are never returned.
+ * @export
+ * @interface EmbeddedBrandingRequestCompanyLogo
+ */
+export interface EmbeddedBrandingRequestCompanyLogo {
+    /**
+     * Public `http` or `https` URL of the logo image. The value has to parse as one — anything else returns a `422`. SignWell never requests the URL when the document is created, so it is not checked for reachability or for what it points at. If the URL turns out to be unreachable, slow, or not a usable image when the page loads, the page falls back to the no-logo experience rather than erroring.
+     * @type {string}
+     * @memberof EmbeddedBrandingRequestCompanyLogo
+     */
+    file_url?: string;
+    /**
+     * RFC 4648 Base64 string of the logo image. The 300 KB limit applies to the decoded image, not to the string you send, so a valid string runs about a third larger. The decoded image must be one of image/jpeg, image/png, image/gif, image/tiff, image/webp, image/svg+xml, image/heic, image/heif, image/avif. A payload that cannot be decoded, is not one of those formats, or is over the size limit returns a `422`. A payload that is accepted here but still fails to render when the page loads falls back to the no-logo experience.
+     * @type {string}
+     * @memberof EmbeddedBrandingRequestCompanyLogo
+     */
+    file_base64?: string;
+}
+
+/**
+ * Optional container for embedded settings. Purely additive: requests that omit it behave exactly as before, and the existing top-level `api_application_id`, `embedded_signing` and `embedded_signing_notifications` parameters are unchanged. Not supported on template endpoints, which return a `422` if it is present.
+ * @export
+ * @interface EmbeddedRequest
+ */
+export interface EmbeddedRequest {
+    /**
+     * 
+     * @type {EmbeddedBrandingRequest}
+     * @memberof EmbeddedRequest
+     */
+    branding?: EmbeddedBrandingRequest | null;
+}
+
 /**
  * Standard error response
  * @export
@@ -3423,7 +4129,6 @@ export interface ErrorResponse {
      */
     meta?: ErrorResponseMeta;
 }
-
 
 /**
  * 
@@ -3451,7 +4156,6 @@ export interface ErrorResponseMeta {
     messages?: Array<string>;
 }
 
-
 /**
  * Type of signing field
  * @export
@@ -3475,7 +4179,6 @@ export enum FieldType {
     AutofillDateSigned = 'autofill_date_signed',
     UnknownDefaultOpenApi = '11184809'
 }
-
 /**
  * 
  * @export
@@ -3549,6 +4252,18 @@ export interface FieldsInnerInner {
      */
     validation?: TextValidation;
     /**
+     * Text fields with custom validation only: the regex pattern used to validate field values. Required when validation is set to custom.
+     * @type {string}
+     * @memberof FieldsInnerInner
+     */
+    validation_regex?: string;
+    /**
+     * Text fields with custom validation only: the error message shown to the recipient when their input doesn't match the regex pattern. Required when validation is set to custom.
+     * @type {string}
+     * @memberof FieldsInnerInner
+     */
+    validation_regex_error_message?: string;
+    /**
      * Text fields only: whether the field width will stay fixed and text will display in multiple lines, rather than one long line. If set to `false` the field width will automatically grow horizontally to fit text on one line. Defaults to `false`.
      * @type {boolean}
      * @memberof FieldsInnerInner
@@ -3600,9 +4315,8 @@ export interface FieldsInnerInner {
 
 
 
-
 /**
- * Format of the file to be downloaded. Supported formats are 'pdf' and 'zip'.
+ * Format of the file to be downloaded. Supported formats are 'pdf' and 'zip'. `zip` is unavailable on a 21 CFR Part 11 document, whose completed PDF, E-Signature page and audit page stay together as one record.
  * @export
  * @enum {string}
  */
@@ -3611,7 +4325,6 @@ export enum FileFormat {
     Zip = 'zip',
     UnknownDefaultOpenApi = '11184809'
 }
-
 /**
  * File information
  * @export
@@ -3623,7 +4336,7 @@ export interface FileInfo {
      * @type {string}
      * @memberof FileInfo
      */
-    name: string;
+    name?: string | null;
     /**
      * Number of pages in the file
      * @type {number}
@@ -3632,13 +4345,11 @@ export interface FileInfo {
     pages_number: number;
 }
 
-
 /**
  * 
  * @export
  */
 export type FilesInner = { name: string; file_url: string; file_base64?: never } | { name: string; file_base64: string; file_url?: never };
-
 
 /**
  * Label information
@@ -3660,7 +4371,6 @@ export interface LabelInfo {
     name?: string;
 }
 
-
 /**
  * Labels can be used to organize documents and templates in a way that can make it easy to find using the document search/template search in SignWell. Labels can be used to organize documents in a way that can make it easy to find using the document search in SignWell.
  * @export
@@ -3674,7 +4384,6 @@ export interface LabelRequest {
      */
     name: string;
 }
-
 
 /**
  * Labels can be used to organize documents and templates in a way that can make it easy to find using the document search/template search in SignWell. Labels can be used to organize documents in a way that can make it easy to find using the document search in SignWell.
@@ -3695,7 +4404,6 @@ export interface LabelResponse {
      */
     name: string;
 }
-
 
 /**
  * Account information associated with the API key
@@ -3746,7 +4454,6 @@ export interface MeResponse {
      */
     contact: MeResponseContact;
 }
-
 
 /**
  * The contact record for the authenticated user
@@ -3810,7 +4517,6 @@ export interface MeResponseContact {
     archived?: boolean;
 }
 
-
 /**
  * The authenticated user
  * @export
@@ -3855,7 +4561,6 @@ export interface MeResponseUser {
     preferences?: MeResponseUserPreferences;
 }
 
-
 /**
  * 
  * @export
@@ -3882,7 +4587,6 @@ export interface MeResponseUserPreferences {
     smart_fields?: boolean;
 }
 
-
 /**
  * NOM-151 certificate data returned when object_only=true
  * @export
@@ -3896,7 +4600,6 @@ export interface Nom151CertificateResponse {
      */
     nom151: Nom151CertificateResponseNom151;
 }
-
 
 /**
  * 
@@ -3954,7 +4657,6 @@ export interface Nom151CertificateResponseNom151 {
     constancia: string;
 }
 
-
 /**
  * NOM-151 download URL returned when url_only=true
  * @export
@@ -3968,7 +4670,6 @@ export interface Nom151UrlResponse {
      */
     file_url: string;
 }
-
 
 /**
  * Pagination metadata for list responses
@@ -4008,7 +4709,6 @@ export interface PaginationMeta {
     total_pages: number;
 }
 
-
 /**
  * 
  * @export
@@ -4028,7 +4728,7 @@ export interface PlaceholdersInner {
      */
     name: string;
     /**
-     * In some cases, it may be necessary to pre-fill the name and email for a placeholder because it will always be the same person for all documents created from this template. This sets the name.
+     * In some cases, it may be necessary to pre-fill the name and email for a placeholder because it will always be the same person for all documents created from this template. This sets the name. Every recipient on a 21 CFR Part 11 document needs a name, so leaving it unset means the name has to be supplied when the document is created.
      * @type {string}
      * @memberof PlaceholdersInner
      */
@@ -4039,8 +4739,49 @@ export interface PlaceholdersInner {
      * @memberof PlaceholdersInner
      */
     preassigned_recipient_email?: string;
+    /**
+     * 
+     * @type {PlaceholdersInnerPasscodeDelivery}
+     * @memberof PlaceholdersInner
+     */
+    passcode_delivery?: PlaceholdersInnerPasscodeDelivery;
 }
 
+/**
+ * Passcode delivery (OTP) settings for this placeholder. When enabled, documents created from this template inherit these settings for the corresponding recipient. While 21 CFR Part 11 is enabled for the workspace, a placeholder cannot disable passcode delivery: it returns a 422.
+ * @export
+ * @interface PlaceholdersInnerPasscodeDelivery
+ */
+export interface PlaceholdersInnerPasscodeDelivery {
+    /**
+     * Enable passcode delivery for this recipient. Cannot be set to `false` on a 21 CFR Part 11 document: it returns a 422.
+     * @type {boolean}
+     * @memberof PlaceholdersInnerPasscodeDelivery
+     */
+    enabled?: boolean;
+    /**
+     * Delivery methods for the passcode. Currently supports: email. Defaults to ["email"] when omitted.
+     * @type {Array<string>}
+     * @memberof PlaceholdersInnerPasscodeDelivery
+     */
+    methods?: Array<PlaceholdersInnerPasscodeDeliveryMethodsEnum>;
+    /**
+     * Whether the passcode expires after the recipient accesses the document. Inherited by documents created from this template.
+     * @type {boolean}
+     * @memberof PlaceholdersInnerPasscodeDelivery
+     */
+    expire_after_access?: boolean;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum PlaceholdersInnerPasscodeDeliveryMethodsEnum {
+    Email = 'email',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * Rate limit exceeded error response (HTTP 429)
@@ -4056,7 +4797,6 @@ export interface RateLimitErrorResponse {
     error: string;
 }
 
-
 /**
  * 
  * @export
@@ -4070,23 +4810,29 @@ export interface RecipientsInner {
      */
     id: string;
     /**
-     * Name of the recipient.
+     * Name of the recipient. Required on 21 CFR Part 11 documents: a recipient without a name returns a 422.
      * @type {string}
      * @memberof RecipientsInner
      */
     name?: string;
     /**
-     * Email address for the recipient.
+     * Email address for the recipient. Required unless the recipient's `delivery_method` is `sms`.
      * @type {string}
      * @memberof RecipientsInner
      */
-    email: string;
+    email?: string;
     /**
-     * If set, signers assigned with a passcode will be required to enter the passcode before they’re able to view and complete the document.
+     * If set, signers assigned with a passcode will be required to enter the passcode before they’re able to view and complete the document. On a 21 CFR Part 11 document SignWell generates the passcode, so a sender-defined passcode returns a 422.
      * @type {string}
      * @memberof RecipientsInner
      */
     passcode?: string;
+    /**
+     * 
+     * @type {RecipientsInnerPasscodeDelivery}
+     * @memberof RecipientsInner
+     */
+    passcode_delivery?: RecipientsInnerPasscodeDelivery;
     /**
      * Email subject for the signature request that the recipient will see. Overrides the general subject for the document.
      * @type {string}
@@ -4111,8 +4857,79 @@ export interface RecipientsInner {
      * @memberof RecipientsInner
      */
     send_email_delay?: number;
+    /**
+     * How the recipient is notified and receives the signing link: `email` (default), `sms`, or `email_and_sms`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled. `email` requires `email`, `sms` requires `phone_number`, and `email_and_sms` requires both. SMS content always uses fixed system templates; `subject` and `message` apply to email notifications only. A 21 CFR Part 11 document records one verified channel per recipient: `email` and `sms` are both accepted, while `email_and_sms` returns a 422.
+     * @type {string}
+     * @memberof RecipientsInner
+     */
+    delivery_method?: RecipientsInnerDeliveryMethodEnum;
+    /**
+     * Recipient phone number in E.164 format (for example `+14155551234`). Required when `delivery_method` is `sms` or `email_and_sms`. Only phone numbers from the country codes currently enabled for SMS are accepted.
+     * @type {string}
+     * @memberof RecipientsInner
+     */
+    phone_number?: string;
+    /**
+     * Applies only when `embedded_signing` is `true` and the recipient's `delivery_method` includes SMS. By default, recipients are not notified through SMS when doing embedded signing. Setting this to `true` will send the SMS notification to the recipient. Default is `false`.
+     * @type {boolean}
+     * @memberof RecipientsInner
+     */
+    send_sms?: boolean;
+    /**
+     * If `send_sms` is `true` the recipient will receive the SMS notification immediately. In the case of embedded signing, you can delay this notification to only send if the document is not completed within a few minutes. The SMS will not go out if the document is completed before the delay time is over. Valid values are in minutes ranging from `0` to `60`. Defaults to `0`.
+     * @type {number}
+     * @memberof RecipientsInner
+     */
+    send_sms_delay?: number;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum RecipientsInnerDeliveryMethodEnum {
+    Email = 'email',
+    Sms = 'sms',
+    EmailAndSms = 'email_and_sms',
+    UnknownDefaultOpenApi = '11184809'
+}
+
+/**
+ * Passcode delivery settings. When enabled, the system delivers the passcode to the signer via email. Always on for 21 CFR Part 11 documents and cannot be disabled.
+ * @export
+ * @interface RecipientsInnerPasscodeDelivery
+ */
+export interface RecipientsInnerPasscodeDelivery {
+    /**
+     * Enable passcode delivery for this recipient. Cannot be set to `false` on a 21 CFR Part 11 document: it returns a 422.
+     * @type {boolean}
+     * @memberof RecipientsInnerPasscodeDelivery
+     */
+    enabled?: boolean;
+    /**
+     * Delivery methods for the passcode. Currently supports: email. Defaults to ["email"] when omitted.
+     * @type {Array<string>}
+     * @memberof RecipientsInnerPasscodeDelivery
+     */
+    methods?: Array<RecipientsInnerPasscodeDeliveryMethodsEnum>;
+    /**
+     * When enabled, the passcode is cleared after successful authentication. If passcode_delivery is also enabled, a new passcode is auto-generated on the next send request. Otherwise the recipient will no longer need a passcode.
+     * @type {boolean}
+     * @memberof RecipientsInnerPasscodeDelivery
+     */
+    expire_after_access?: boolean;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum RecipientsInnerPasscodeDeliveryMethodsEnum {
+    Email = 'email',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * 
@@ -4127,13 +4944,12 @@ export interface ReminderRecipientsInner {
      */
     name?: string;
     /**
-     * Recipient's email address.
+     * Recipient's email address. Used to match the recipient to remind; not required for SMS-only recipients, who can be identified by name instead.
      * @type {string}
      * @memberof ReminderRecipientsInner
      */
     email?: string;
 }
-
 
 /**
  * 
@@ -4142,13 +4958,12 @@ export interface ReminderRecipientsInner {
  */
 export interface SendReminderRequest {
     /**
-     * Optional list if recipients within the document to send a reminder email to. If none are specified, all recipients that have not signed yet will receive a reminder email.
+     * Optional list of recipients within the document to remind. If none are specified, all recipients that have not signed yet are reminded. Each recipient is reminded through their own delivery method: email-only recipients get a reminder email, SMS-only recipients get a reminder text, and email_and_sms recipients get both. If the workspace has insufficient SMS credit, only the SMS reminder is skipped and the sender is notified once; the email reminder (if applicable) still goes out.
      * @type {Array<ReminderRecipientsInner>}
      * @memberof SendReminderRequest
      */
     recipients?: Array<ReminderRecipientsInner>;
 }
-
 
 /**
  * 
@@ -4175,7 +4990,6 @@ export interface TemplateAttachmentRequestsInner {
      */
     required?: boolean;
 }
-
 
 /**
  * 
@@ -4235,7 +5049,6 @@ export interface TemplateCheckboxGroupsInner {
 
 
 
-
 /**
  * 
  * @export
@@ -4256,14 +5069,12 @@ export interface TemplateFieldValuesInner {
     value: TemplateFieldValuesInnerValue;
 }
 
-
 /**
  * @type TemplateFieldValuesInnerValue
  * TextField value must be a string or a number.
  * @export
  */
-export type TemplateFieldValuesInnerValue = boolean | number | string;
-/**
+export type TemplateFieldValuesInnerValue = boolean | number | string;/**
  * 
  * @export
  * @interface TemplateFieldsInnerInner
@@ -4336,6 +5147,18 @@ export interface TemplateFieldsInnerInner {
      */
     validation?: TextValidation;
     /**
+     * Text fields with custom validation only: the regex pattern used to validate field values. Required when validation is set to custom.
+     * @type {string}
+     * @memberof TemplateFieldsInnerInner
+     */
+    validation_regex?: string;
+    /**
+     * Text fields with custom validation only: the error message shown to the recipient when their input doesn't match the regex pattern. Required when validation is set to custom.
+     * @type {string}
+     * @memberof TemplateFieldsInnerInner
+     */
+    validation_regex_error_message?: string;
+    /**
      * Text fields only: whether the field width will stay fixed and text will display in multiple lines, rather than one long line. If set to `false` the field width will automatically grow horizontally to fit text on one line. Defaults to `false`.
      * @type {boolean}
      * @memberof TemplateFieldsInnerInner
@@ -4387,7 +5210,6 @@ export interface TemplateFieldsInnerInner {
 
 
 
-
 /**
  * 
  * @export
@@ -4401,17 +5223,17 @@ export interface TemplateRecipientsInner {
      */
     id: string;
     /**
-     * Name of the recipient.
+     * Name of the recipient. Required on 21 CFR Part 11 documents: a recipient without a name returns a 422.
      * @type {string}
      * @memberof TemplateRecipientsInner
      */
     name?: string;
     /**
-     * Email address for the recipient.
+     * Email address for the recipient. Required unless `delivery_method` is `sms`.
      * @type {string}
      * @memberof TemplateRecipientsInner
      */
-    email: string;
+    email?: string;
     /**
      * The name of the placeholder you want this recipient assigned to.
      * @type {string}
@@ -4419,11 +5241,17 @@ export interface TemplateRecipientsInner {
      */
     placeholder_name?: string;
     /**
-     * If set, signers assigned with a passcode will be required to enter the passcode before they’re able to view and complete the document.
+     * If set, signers assigned with a passcode will be required to enter the passcode before they’re able to view and complete the document. On a 21 CFR Part 11 document SignWell generates the passcode, so a sender-defined passcode returns a 422.
      * @type {string}
      * @memberof TemplateRecipientsInner
      */
     passcode?: string;
+    /**
+     * 
+     * @type {RecipientsInnerPasscodeDelivery}
+     * @memberof TemplateRecipientsInner
+     */
+    passcode_delivery?: RecipientsInnerPasscodeDelivery;
     /**
      * Email subject for the signature request that the recipient will see. Overrides the general subject for the template.
      * @type {string}
@@ -4448,8 +5276,43 @@ export interface TemplateRecipientsInner {
      * @memberof TemplateRecipientsInner
      */
     send_email_delay?: number;
+    /**
+     * How the recipient is notified and receives the signing link: `email` (default), `sms`, or `email_and_sms`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled. `email` requires `email`, `sms` requires `phone_number`, and `email_and_sms` requires both. SMS content always uses fixed system templates; `subject` and `message` apply to email notifications only. A 21 CFR Part 11 document records one verified channel per recipient: `email` and `sms` are both accepted, while `email_and_sms` returns a 422.
+     * @type {string}
+     * @memberof TemplateRecipientsInner
+     */
+    delivery_method?: TemplateRecipientsInnerDeliveryMethodEnum;
+    /**
+     * Recipient phone number in E.164 format (for example `+14155551234`). Required when `delivery_method` is `sms` or `email_and_sms`. Only phone numbers from the country codes currently enabled for SMS are accepted.
+     * @type {string}
+     * @memberof TemplateRecipientsInner
+     */
+    phone_number?: string;
+    /**
+     * Applies only when `embedded_signing` is `true` and the recipient's `delivery_method` includes SMS. By default, recipients are not notified through SMS when doing embedded signing. Setting this to `true` will send the SMS notification to the recipient. Default is `false`.
+     * @type {boolean}
+     * @memberof TemplateRecipientsInner
+     */
+    send_sms?: boolean;
+    /**
+     * If `send_sms` is `true` the recipient will receive the SMS notification immediately. In the case of embedded signing, you can delay this notification to only send if the document is not completed within a few minutes. The SMS will not go out if the document is completed before the delay time is over. Valid values are in minutes ranging from `0` to `60`. Defaults to `0`.
+     * @type {number}
+     * @memberof TemplateRecipientsInner
+     */
+    send_sms_delay?: number;
 }
 
+
+/**
+* @export
+* @enum {string}
+*/
+export enum TemplateRecipientsInnerDeliveryMethodEnum {
+    Email = 'email',
+    Sms = 'sms',
+    EmailAndSms = 'email_and_sms',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * Validation rule for text fields
@@ -4468,7 +5331,47 @@ export enum TextValidation {
     Alphanumeric = 'alphanumeric',
     UsBankRoutingNumber = 'us_bank_routing_number',
     UsBankAccountNumber = 'us_bank_account_number',
+    Custom = 'custom',
     UnknownDefaultOpenApi = '11184809'
+}
+/**
+ * 
+ * @export
+ * @interface UpdateAuthenticationRequest
+ */
+export interface UpdateAuthenticationRequest {
+    /**
+     * Recipients whose authentication settings should be updated.
+     * @type {Array<UpdateAuthenticationRequestRecipientsInner>}
+     * @memberof UpdateAuthenticationRequest
+     */
+    recipients: Array<UpdateAuthenticationRequestRecipientsInner>;
+}
+
+/**
+ * 
+ * @export
+ * @interface UpdateAuthenticationRequestRecipientsInner
+ */
+export interface UpdateAuthenticationRequestRecipientsInner {
+    /**
+     * A unique identifier that you will give to each recipient. We recommend numbering sequentially from 1 to X. IDs are required for associating recipients to fields and more.
+     * @type {string}
+     * @memberof UpdateAuthenticationRequestRecipientsInner
+     */
+    id: string;
+    /**
+     * Updated passcode for the recipient. If set, the signer will be required to enter the passcode before viewing and completing the document. On a 21 CFR Part 11 document SignWell generates the passcode, so a sender-defined passcode returns a 422.
+     * @type {string}
+     * @memberof UpdateAuthenticationRequestRecipientsInner
+     */
+    passcode?: string;
+    /**
+     * 
+     * @type {UpdateRecipientsMapInnerPasscodeDelivery}
+     * @memberof UpdateAuthenticationRequestRecipientsInner
+     */
+    passcode_delivery?: UpdateRecipientsMapInnerPasscodeDelivery;
 }
 
 /**
@@ -4484,19 +5387,25 @@ export interface UpdateDocumentAndSendRequest {
      */
     test_mode?: boolean;
     /**
+     * Only applies when `test_mode` is `true`. When `true`, and the document has an SMS-only recipient, sends the document owner a test-mode preview email (with a masked phone number) instead of the regular SMS sender-copy email. No SMS is sent and no credits are used, in test mode or otherwise. Defaults to `false`.
+     * @type {boolean}
+     * @memberof UpdateDocumentAndSendRequest
+     */
+    send_sms_test_preview_email?: boolean;
+    /**
      * The name of the document.
      * @type {string}
      * @memberof UpdateDocumentAndSendRequest
      */
     name?: string;
     /**
-     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template).
+     * Email subject for the signature request that recipients will see. Defaults to the default system subject or a template subject (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof UpdateDocumentAndSendRequest
      */
     subject?: string;
     /**
-     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template).
+     * Email message for the signature request that recipients will see. Defaults to the default system message or a template message (if the document is created from a template). Applies to email notifications only; SMS notifications always use fixed system templates.
      * @type {string}
      * @memberof UpdateDocumentAndSendRequest
      */
@@ -4538,6 +5447,12 @@ export interface UpdateDocumentAndSendRequest {
      */
     embedded_signing_notifications?: boolean;
     /**
+     * 
+     * @type {EmbeddedRequest}
+     * @memberof UpdateDocumentAndSendRequest
+     */
+    embedded?: EmbeddedRequest;
+    /**
      * Sets the custom requester name for the document. When set, this is the name used for all email communications, signing notifications, and in the audit file.
      * @type {string}
      * @memberof UpdateDocumentAndSendRequest
@@ -4562,7 +5477,7 @@ export interface UpdateDocumentAndSendRequest {
      */
     allow_decline?: boolean;
     /**
-     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else.
+     * In some cases a signer is not the right person to sign and may need to reassign their signing responsibilities to another person. This feature allows them to reassign the document to someone else. Unavailable on 21 CFR Part 11 documents: omit it and reassignment stays off, while sending `true` returns a 422.
      * @type {boolean}
      * @memberof UpdateDocumentAndSendRequest
      */
@@ -4573,6 +5488,12 @@ export interface UpdateDocumentAndSendRequest {
      * @memberof UpdateDocumentAndSendRequest
      */
     decline_redirect_url?: string;
+    /**
+     * Conditional logic rules that show, hide, or require fields based on what a signer does to other fields. Every identifier is a field api_id. At most 10 rules per document or template.
+     * @type {Array<ConditionalRuleRequest>}
+     * @memberof UpdateDocumentAndSendRequest
+     */
+    conditional_rules?: Array<ConditionalRuleRequest>;
     /**
      * Optional key-value data that can be associated with the document. If set, will be available every time the document data is returned.
      * @type {{ [key: string]: string | undefined; }}
@@ -4592,7 +5513,6 @@ export interface UpdateDocumentAndSendRequest {
      */
     checkbox_groups?: Array<CheckboxGroupsInner>;
 }
-
 
 /**
  * 
@@ -4631,13 +5551,54 @@ export interface UpdateRecipientsMapInner {
      */
     message?: string;
     /**
-     * Updated passcode for the recipient. If set, the signer will be required to enter the passcode before viewing and completing the document.
+     * Updated passcode for the recipient. If set, the signer will be required to enter the passcode before viewing and completing the document. On a 21 CFR Part 11 document SignWell generates the passcode, so a sender-defined passcode returns a 422.
      * @type {string}
      * @memberof UpdateRecipientsMapInner
      */
     passcode?: string;
+    /**
+     * 
+     * @type {UpdateRecipientsMapInnerPasscodeDelivery}
+     * @memberof UpdateRecipientsMapInner
+     */
+    passcode_delivery?: UpdateRecipientsMapInnerPasscodeDelivery;
 }
 
+/**
+ * Passcode delivery settings. Always on for 21 CFR Part 11 documents and cannot be disabled.
+ * @export
+ * @interface UpdateRecipientsMapInnerPasscodeDelivery
+ */
+export interface UpdateRecipientsMapInnerPasscodeDelivery {
+    /**
+     * Enable or disable passcode delivery. Cannot be set to `false` on a 21 CFR Part 11 document: it returns a 422.
+     * @type {boolean}
+     * @memberof UpdateRecipientsMapInnerPasscodeDelivery
+     */
+    enabled?: boolean;
+    /**
+     * Delivery methods. Defaults to ["email"].
+     * @type {Array<string>}
+     * @memberof UpdateRecipientsMapInnerPasscodeDelivery
+     */
+    methods?: Array<UpdateRecipientsMapInnerPasscodeDeliveryMethodsEnum>;
+    /**
+     * Clear passcode after successful authentication. If passcode_delivery is also enabled, a new passcode is auto-generated on the next send request. Otherwise the recipient will no longer need a passcode.
+     * @type {boolean}
+     * @memberof UpdateRecipientsMapInnerPasscodeDelivery
+     */
+    expire_after_access?: boolean;
+}
+
+
+/**
+* @export
+* @enum {string}
+*/
+export enum UpdateRecipientsMapInnerPasscodeDeliveryMethodsEnum {
+    Email = 'email',
+    UnknownDefaultOpenApi = '11184809'
+}
 
 /**
  * 
@@ -4653,7 +5614,6 @@ export interface UpdateRecipientsRequest {
     recipients: Array<UpdateRecipientsMapInner>;
 }
 
-
 /**
  * Validation error response. The errors object contains field-specific error details with dynamic keys.
  * @export
@@ -4668,14 +5628,12 @@ export interface ValidationErrorResponse {
     errors: { [key: string]: ValidationErrorValue | undefined; };
 }
 
-
 /**
  * @type ValidationErrorValue
  * Validation error detail. Can be a string, a list of strings, or nested field errors.
  * @export
  */
-export type ValidationErrorValue = Array<string> | string | { [key: string]: ValidationErrorValue | undefined; };
-/**
+export type ValidationErrorValue = Array<string> | string | { [key: string]: ValidationErrorValue | undefined; };/**
  * Webhook subscription
  * @export
  * @interface WebhookResponse
@@ -4700,5 +5658,4 @@ export interface WebhookResponse {
      */
     api_application_id?: string | null;
 }
-
 

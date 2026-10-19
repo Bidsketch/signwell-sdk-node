@@ -34,7 +34,7 @@ export interface DeleteWebhookRequest {
 export class WebhooksApi extends runtime.BaseAPI {
 
     /**
-     * Register a callback URL that we will post document events to.
+     * Register a callback URL that we will post document events to. Note: a `document_signed` event is not emitted solely because a pre-signed template signature/initials was copied as document content, and `event.related_signer` only identifies a real recipient signing action. Two additional event types cover SMS delivery outcomes: `document_sms_failed` fires when an SMS reaches a terminal failure (undelivered or failed), and `document_sms_opted_out` fires when a phone number is newly added to the SMS suppression list. Both carry `event.related_recipient` (id, name, email when present, `phone_number_masked`, and `delivery_method`) instead of `event.related_signer`, and each recipient in `data.object.recipients[]` whose delivery method includes SMS carries a nested `sms` object (`phone_number_masked`, `send_sms`, `send_sms_delay`, `delivery_status`, `message_type`, `failed`, `failed_details`). Email-only recipients keep their existing payload shape unchanged. Only webhooks registered on API-type hooks receive these two events.
      * Create Webhook
      */
     async createWebhookRaw(requestParameters: CreateWebhookOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<WebhookResponse>> {
@@ -68,7 +68,7 @@ export class WebhooksApi extends runtime.BaseAPI {
     }
 
     /**
-     * Register a callback URL that we will post document events to.
+     * Register a callback URL that we will post document events to. Note: a `document_signed` event is not emitted solely because a pre-signed template signature/initials was copied as document content, and `event.related_signer` only identifies a real recipient signing action. Two additional event types cover SMS delivery outcomes: `document_sms_failed` fires when an SMS reaches a terminal failure (undelivered or failed), and `document_sms_opted_out` fires when a phone number is newly added to the SMS suppression list. Both carry `event.related_recipient` (id, name, email when present, `phone_number_masked`, and `delivery_method`) instead of `event.related_signer`, and each recipient in `data.object.recipients[]` whose delivery method includes SMS carries a nested `sms` object (`phone_number_masked`, `send_sms`, `send_sms_delay`, `delivery_status`, `message_type`, `failed`, `failed_details`). Email-only recipients keep their existing payload shape unchanged. Only webhooks registered on API-type hooks receive these two events.
      * Create Webhook
      */
     async createWebhook(requestParameters: CreateWebhookOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<WebhookResponse> {

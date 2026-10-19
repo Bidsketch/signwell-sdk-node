@@ -24,6 +24,7 @@ import type {
   FileFormat,
   RateLimitErrorResponse,
   SendReminderRequest,
+  UpdateAuthenticationRequest,
   UpdateDocumentAndSendRequest,
   UpdateRecipientsRequest,
   ValidationErrorResponse,
@@ -68,6 +69,11 @@ export interface SendReminderOperationRequest {
     sendReminderRequest: SendReminderRequest;
 }
 
+export interface UpdateAuthenticationOperationRequest {
+    id: string;
+    updateAuthenticationRequest: UpdateAuthenticationRequest;
+}
+
 export interface UpdateRecipientsOperationRequest {
     id: string;
     updateRecipientsRequest: UpdateRecipientsRequest;
@@ -98,7 +104,7 @@ export class WaitForCompletionTimeoutError extends Error {
 export class DocumentApi extends runtime.BaseAPI {
 
     /**
-     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent.
+     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent. Recipients are notified by email, SMS, or both based on each recipient\'s `delivery_method`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled, and requires a `phone_number` in E.164 format.
      * Create Document
      */
     async createDocumentRaw(requestParameters: CreateDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
@@ -132,7 +138,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent.
+     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent. Recipients are notified by email, SMS, or both based on each recipient\'s `delivery_method`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled, and requires a `phone_number` in E.164 format.
      * Create Document
      */
     async createDocument(requestParameters: CreateDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
@@ -141,7 +147,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent.
+     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent. Pre-signed template signatures and initials are copied to the new document as document content — they remain visible on the document but do not generate a signing event, do not emit a `document_signed` webhook, and the recipient\'s status will not reflect them as a real signing action. If the template was pre-signed for a signer and the request adds new unsigned signature/initials fields for that same signer, the pre-applied ratifications are cleared silently so the signer is asked to sign once. Recipients are notified by email, SMS, or both based on each recipient\'s `delivery_method`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled, and requires a `phone_number` in E.164 format.
      * Create Document from Template
      */
     async createDocumentFromTemplateRaw(requestParameters: CreateDocumentFromTemplateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentFromTemplateResponse>> {
@@ -175,7 +181,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent.
+     * Creates and optionally sends a new document for signing. If `draft` is set to true the document will not be sent. Pre-signed template signatures and initials are copied to the new document as document content — they remain visible on the document but do not generate a signing event, do not emit a `document_signed` webhook, and the recipient\'s status will not reflect them as a real signing action. If the template was pre-signed for a signer and the request adds new unsigned signature/initials fields for that same signer, the pre-applied ratifications are cleared silently so the signer is asked to sign once. Recipients are notified by email, SMS, or both based on each recipient\'s `delivery_method`. SMS delivery is available only to workspaces that are eligible for SMS and have it enabled, and requires a `phone_number` in E.164 format.
      * Create Document from Template
      */
     async createDocumentFromTemplate(requestParameters: CreateDocumentFromTemplateRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentFromTemplateResponse> {
@@ -299,7 +305,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a document and all associated document data. Supply the unique document ID from either a document creation request or Document page URL.
+     * Returns a document and all associated document data. Supply the unique document ID from either a document creation request or Document page URL. Each recipient includes its `delivery_method`, and recipients whose delivery includes SMS also include an `sms` object with the masked phone number and SMS delivery status.
      * Get Document
      */
     async getDocumentRaw(requestParameters: GetDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
@@ -336,7 +342,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Returns a document and all associated document data. Supply the unique document ID from either a document creation request or Document page URL.
+     * Returns a document and all associated document data. Supply the unique document ID from either a document creation request or Document page URL. Each recipient includes its `delivery_method`, and recipients whose delivery includes SMS also include an `sms` object with the masked phone number and SMS delivery status.
      * Get Document
      */
     async getDocument(requestParameters: GetDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
@@ -431,7 +437,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates a draft document and sends it to be signed by recipients.
+     * Updates a draft document and sends it to be signed by recipients. `subject` and `message` apply to email notifications only; SMS notifications always use fixed system templates.
      * Update and Send Document
      */
     async sendDocumentRaw(requestParameters: SendDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
@@ -478,7 +484,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates a draft document and sends it to be signed by recipients.
+     * Updates a draft document and sends it to be signed by recipients. `subject` and `message` apply to email notifications only; SMS notifications always use fixed system templates.
      * Update and Send Document
      */
     async sendDocument(requestParameters: SendDocumentRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
@@ -501,7 +507,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sends a reminder email to recipients that have not signed yet.
+     * Sends a reminder to recipients who have not signed yet. Each recipient is reminded through their delivery method (email, SMS, or both). SMS reminders are only sent to recipients whose delivery method includes SMS, and only when the workspace is eligible for SMS and has it enabled.
      * Send Reminder
      */
     async sendReminderRaw(requestParameters: SendReminderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
@@ -548,7 +554,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Sends a reminder email to recipients that have not signed yet.
+     * Sends a reminder to recipients who have not signed yet. Each recipient is reminded through their delivery method (email, SMS, or both). SMS reminders are only sent to recipients whose delivery method includes SMS, and only when the workspace is eligible for SMS and has it enabled.
      * Send Reminder
      */
     async sendReminder(requestParameters: SendReminderOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
@@ -556,7 +562,63 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates one or more recipients on a document that has already been sent. Only recipients who have not started signing may be updated. Recipient IDs must be retrieved from the Get Document response. Allowed document statuses: sent, viewed, pending, bounced. For non-embedded documents, updated recipients will receive a new notification email. For embedded signing documents, email behavior follows each recipient\'s send_email setting.
+     * Update passcode delivery settings for recipients on a sent document. Only recipients who have not started signing can be updated.
+     * Update Authentication
+     */
+    async updateAuthenticationRaw(requestParameters: UpdateAuthenticationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
+        if (requestParameters['id'] == null) {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was null or undefined when calling updateAuthentication().'
+            );
+        }
+        if (typeof requestParameters['id'] === 'string' && requestParameters['id'].trim() === '') {
+            throw new runtime.RequiredError(
+                'id',
+                'Required parameter "id" was empty when calling updateAuthentication().'
+            );
+        }
+
+        if (requestParameters['updateAuthenticationRequest'] == null) {
+            throw new runtime.RequiredError(
+                'updateAuthenticationRequest',
+                'Required parameter "updateAuthenticationRequest" was null or undefined when calling updateAuthentication().'
+            );
+        }
+
+        const queryParameters: runtime.HTTPQuery = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.apiKey) {
+            headerParameters["X-Api-Key"] = await this.configuration.apiKey("X-Api-Key"); // api_key authentication
+        }
+
+
+        const response = await this.request({
+            path: `/api/v1/documents/{id}/authentication`.replace(`{${"id"}}`, encodeURIComponent(String(requestParameters['id']))),
+            method: 'PATCH',
+            headers: headerParameters,
+            query: queryParameters,
+            body: requestParameters['updateAuthenticationRequest'],
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response);
+    }
+
+    /**
+     * Update passcode delivery settings for recipients on a sent document. Only recipients who have not started signing can be updated.
+     * Update Authentication
+     */
+    async updateAuthentication(requestParameters: UpdateAuthenticationOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {
+        const response = await this.updateAuthenticationRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Updates one or more recipients on a document that has already been sent. Only recipients who have not started signing may be updated. Recipient IDs must be retrieved from the Get Document response. Allowed document statuses: sent, viewed, pending, bounced. For non-embedded documents, updated recipients will receive a new notification email. For embedded signing documents, email behavior follows each recipient\'s send_email setting. This endpoint does not support changing a recipient\'s `delivery_method` or `phone_number`; SMS delivery settings are set when the document is created.
      * Update Recipients
      */
     async updateRecipientsRaw(requestParameters: UpdateRecipientsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DocumentResponse>> {
@@ -603,7 +665,7 @@ export class DocumentApi extends runtime.BaseAPI {
     }
 
     /**
-     * Updates one or more recipients on a document that has already been sent. Only recipients who have not started signing may be updated. Recipient IDs must be retrieved from the Get Document response. Allowed document statuses: sent, viewed, pending, bounced. For non-embedded documents, updated recipients will receive a new notification email. For embedded signing documents, email behavior follows each recipient\'s send_email setting.
+     * Updates one or more recipients on a document that has already been sent. Only recipients who have not started signing may be updated. Recipient IDs must be retrieved from the Get Document response. Allowed document statuses: sent, viewed, pending, bounced. For non-embedded documents, updated recipients will receive a new notification email. For embedded signing documents, email behavior follows each recipient\'s send_email setting. This endpoint does not support changing a recipient\'s `delivery_method` or `phone_number`; SMS delivery settings are set when the document is created.
      * Update Recipients
      */
     async updateRecipients(requestParameters: UpdateRecipientsOperationRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DocumentResponse> {

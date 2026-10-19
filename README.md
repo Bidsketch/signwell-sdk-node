@@ -10,6 +10,18 @@ npm install @signwell/node-sdk
 
 Requires Node.js 18 or newer.
 
+## Retries and future API values
+
+Explicit HTTP 429 responses retry up to twice, including JSON POST requests and
+downloads. Retry-After seconds or HTTP dates are honored; absent or invalid
+headers use one then two seconds of backoff. A requested wait above 60 seconds
+returns the rate-limit error immediately. Network failures and other status codes
+are not retried by default. Disable SDK retries with `new Configuration({ maxRateLimitRetries: 0 })`.
+Abort signals cancel pending retry waits. Requests with streaming bodies are not replayed.
+
+Unknown enum strings returned by the API remain readable as their original strings.
+Known enum values keep their existing API strings.
+
 ## Quick Start
 
 ```ts
